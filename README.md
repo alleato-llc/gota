@@ -195,14 +195,22 @@ your own systems (CI, a dashboard, a database, a PR comment):
 - **The Markdown string.** `harness.render_markdown(rows, intro=, impl_order=, ...)`
   returns the table as a string, for a PR comment or a docs page.
 - **Stream the outputs.** `harness.write_results(...)` accepts a path *or any open
-  writable stream* for each output, so you can send the JSON or Markdown to
-  `sys.stdout`, an `io.StringIO`, or an HTTP response body instead of a file:
+  writable stream* for each output, so you can capture the JSON or Markdown in memory
+  or stream it straight to a sink (`sys.stdout`, a file, an HTTP response body) instead
+  of a file path:
 
   ```python
   import io, sys, harness
-  buf = io.StringIO()
-  harness.write_results(rows, buf, sys.stdout, params=..., meta=..., units=..., ...)
-  post_to_dashboard(buf.getvalue())   # the results.json text
+
+  # In-memory: capture both outputs as strings, then hand them off.
+  json_buf, md_buf = io.StringIO(), io.StringIO()
+  harness.write_results(rows, json_buf, md_buf, params=..., meta=..., units=..., ...)
+  post_to_dashboard(json_buf.getvalue())   # the results.json text
+  comment_on_pr(md_buf.getvalue())         # the Markdown table
+
+  # Streaming: write straight to open sinks, nothing buffered in memory.
+  with open("results.json", "w") as jf:
+      harness.write_results(rows, jf, sys.stdout, params=..., meta=..., units=..., ...)
   ```
 
 - **The HTML.** Feed your `results.json` to `report.py` (above), or call

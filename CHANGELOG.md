@@ -10,6 +10,12 @@ PR**, grouped under Added / Changed / Fixed / Removed.
 
 ## [Unreleased]
 
+### Changed
+
+- `README.md`: the "Using it in your own tooling" stream-outputs example now shows both
+  in-memory capture (two `io.StringIO` buffers) and true streaming to open sinks, side
+  by side, instead of a single mixed snippet.
+
 ### Fixed
 
 - `report_template.html`: the documentation comment listed the substitution tokens
