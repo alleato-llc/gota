@@ -1,0 +1,18 @@
+# Build artifacts from runners (the harness builds these on demand)
+runner
+*.o
+*.class
+__pycache__/
+
+# Rust
+target/
+
+# Go
+go.sum
+
+# Zig
+.zig-cache/
+zig-out/
+
+# Node
+node_modules/
