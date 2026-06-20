@@ -161,10 +161,13 @@ For a complete worked consumer that ties several of these together, see
 
 ## HTML report
 
-`report.py` turns a `results.json` into a single self-contained `report.html` — no
-build step, no network, no dependencies. It is generic over the *format*: it renders
-only what the JSON carries (the impl/bench/mbps rows plus the machine/date/params
-provenance), so the same script works for any project.
+`report.py` fills in [`report_template.html`](report_template.html) to produce a
+single self-contained `report.html` — no build step, no network, no dependencies. The
+presentation (HTML/CSS/JS) lives entirely in the template; the script only substitutes
+the title, the embedded data, and the date. To restyle the report, **edit the
+template, not the script** (or pass `--template your.html`). It is generic over the
+*format*: it renders only what the JSON carries (the impl/bench/mbps rows plus the
+machine/date/params provenance), so the same template works for any project.
 
 ```
 python3 report.py results.json -o report.html --title "My project throughput"
@@ -174,8 +177,9 @@ python3 report.py                 # empty viewer; load a results.json from the p
 The page has a **file picker**, so one generated `report.html` can open any
 `results.json` you hand it later (drop the file in, it re-renders). Passing a
 `results.json` on the command line just embeds it so the page is populated on open.
-Numbers are formatted with units (`84.3 MB/s`, not `84.3`), columns sort on click, and
-the best value per column is highlighted. The example's report is committed at
+Numbers are formatted with units (`84.3 MB/s`, not `84.3`); each cell carries a
+magnitude bar tinted with a per-language color; columns sort on click; and the best
+value per column is starred. The example's report is committed at
 [`examples/report.html`](examples/report.html).
 
 ## Using it in your own tooling
