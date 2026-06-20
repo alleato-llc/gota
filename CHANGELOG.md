@@ -10,6 +10,12 @@ PR**, grouped under Added / Changed / Fixed / Removed.
 
 ## [Unreleased]
 
+### Fixed
+
+- `report_template.html`: the documentation comment listed the substitution tokens
+  verbatim, so `report.py`'s `.replace()` dumped the title/data/date into the comment.
+  Reworded the comment so it no longer contains the literal tokens.
+
 ### Added
 
 - The protocol (`PROTOCOL.md`): the uniform recipe every runner follows and the
