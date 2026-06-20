@@ -105,4 +105,7 @@ contract).
   implementations, optimistic for real-world latency. Naive code shows
   language/runtime overhead, not how fast tuned/SIMD code can go. Say so.
 - Keep `PROTOCOL.md`, `README.md`, and the per-language READMEs in step with the code.
+- **Update the changelog as you go.** Any change worth noting adds a bullet to the
+  `Unreleased` section of `CHANGELOG.md` (grouped under Added / Changed / Fixed /
+  Removed) in the same commit or PR.
 - Direct prose, minimal ceremony. Educational and unaudited; MIT licensed.

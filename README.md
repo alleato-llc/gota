@@ -216,6 +216,13 @@ your own systems (CI, a dashboard, a database, a PR comment):
   normal machine, which is right for *comparing* implementations. For reproducible
   absolutes you would pin cores, lock frequency, and use a dedicated box.
 
+## Changelog
+
+Notable changes are recorded in [`CHANGELOG.md`](CHANGELOG.md)
+([Keep a Changelog](https://keepachangelog.com/) format). **Rule:** any change worth
+noting updates the `Unreleased` section of `CHANGELOG.md` in the *same commit or PR* —
+treat it as part of the change, not an afterthought.
+
 ## Origin
 
 Gota was extracted from the benchmark harness of the
