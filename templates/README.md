@@ -17,29 +17,18 @@ Every runner takes the same three arguments and prints the same JSON, so the Pyt
 orchestrator (`../harness.py`) can build and run any of them interchangeably. See
 [`../PROTOCOL.md`](../PROTOCOL.md) for the contract and the reasoning.
 
-## Build and run
+## Languages
 
-All accept `[buffer_bytes] [warmup_seconds] [measure_seconds]` (defaults: 1048576,
-0.5, 2.0).
+Each has its own short README (files, the exact build/run command, and any
+language-specific notes). All accept `[buffer_bytes] [warmup_seconds]
+[measure_seconds]` (defaults: 1048576, 0.5, 2.0).
 
 | Language | Files | Build and run |
 | --- | --- | --- |
-| Python | `python/{gota.py, runner.py}` | `python3 runner.py 65536 0.5 2.0` |
-| Rust | `rust/{gota.rs, runner.rs}` | `rustc -O runner.rs -o runner && ./runner` |
-| C | `c/{gota.h, gota.c, runner.c}` | `cc -std=c17 -O2 runner.c gota.c -o runner && ./runner` |
-| Go | `go/{go.mod, gota/gota.go, runner.go}` | `go build -o runner . && ./runner` |
-| Java | `java/{Gota.java, Runner.java}` | `javac Gota.java Runner.java && java Runner` |
-| Zig | `zig/{gota.zig, runner.zig}` | `zig build-exe runner.zig -O ReleaseFast && ./runner` |
-| TypeScript | `ts/{gota.ts, runner.ts}` | `npx tsx runner.ts` (or `node --experimental-strip-types runner.ts` on Node >= 22.6) |
-
-Notes:
-
-- **Rust** builds with plain `rustc`; `mod gota;` picks up `gota.rs` beside it. No
-  Cargo project needed for the template (a real consumer would link its own crate).
-- **Go** uses a tiny module (`go.mod`) so `runner.go` (package `main`) can import the
-  separate `gota` package. Rename the module if you vendor it elsewhere.
-- **Zig** targets 0.16: args arrive via `std.process.Init`, timing uses
-  `std.Io.Clock`, and the buffered writer is flushed for you. See the dorado port's
-  `DEVELOPMENT.md` for the 0.16 API background.
-- **TypeScript** avoids parameter properties so it runs under Node's strip-only type
-  stripping as well as `tsx`.
+| [Python](python/README.md) | `python/{gota.py, runner.py}` | `python3 runner.py 65536 0.5 2.0` |
+| [Rust](rust/README.md) | `rust/{gota.rs, runner.rs}` | `rustc -O runner.rs -o runner && ./runner` |
+| [C](c/README.md) | `c/{gota.h, gota.c, runner.c}` | `cc -std=c17 -O2 runner.c gota.c -o runner && ./runner` |
+| [Go](go/README.md) | `go/{go.mod, gota/gota.go, runner.go}` | `go build -o runner . && ./runner` |
+| [Java](java/README.md) | `java/{Gota.java, Runner.java}` | `javac Gota.java Runner.java && java Runner` |
+| [Zig](zig/README.md) | `zig/{gota.zig, runner.zig}` | `zig build-exe runner.zig -O ReleaseFast && ./runner` |
+| [TypeScript](ts/README.md) | `ts/{gota.ts, runner.ts}` | `npx tsx runner.ts` (or `node --experimental-strip-types runner.ts` on Node >= 22.6) |
