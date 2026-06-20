@@ -2,7 +2,7 @@
   "machine": "Apple M4 Max",
   "os": "Darwin arm64",
   "date": "2026-06-20",
-  "git_commit": "00511f9",
+  "git_commit": "e5be0a2",
   "params": {
     "buffer_bytes": 65536,
     "warmup_s": 0.5,
@@ -13,25 +13,25 @@
     {
       "impl": "python",
       "bench": "fnv1a-64",
-      "mbps": 19.26,
+      "mbps": 19.31,
       "iters": 448
     },
     {
       "impl": "c",
       "bench": "fnv1a-64",
-      "mbps": 1112.44,
+      "mbps": 1116.44,
       "iters": 26624
     },
     {
       "impl": "go",
       "bench": "fnv1a-64",
-      "mbps": 1108.6,
+      "mbps": 1097.78,
       "iters": 26624
     },
     {
       "impl": "rust",
       "bench": "fnv1a-64",
-      "mbps": 1108.44,
+      "mbps": 1105.54,
       "iters": 26624
     }
   ]

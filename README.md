@@ -14,6 +14,8 @@ When you have the same operation implemented in several languages and want an ho
   `gota.*` (the harness: the peak-of-batches timing loop, copy as-is) and `runner.*`
   (your code: the operation, plugged in through one seam). See the
   [languages](#languages) below.
+- **A generic HTML report** ([`report.py`](report.py)) that turns any results.json
+  into a standalone, sortable viewer with a file picker.
 
 The reusable thing here is the **protocol and the lessons**, not the code: a
 peak-of-batches loop is ~20 lines you can re-type once you know the recipe. So Gota
@@ -21,6 +23,50 @@ is meant to be **copied, not depended on** — the helpers are small, stable, an
 polyglot (no single package manager spans Rust, Go, Zig, C, Java, Python, and
 TypeScript), so copying is the pragmatic, low-harm choice. Re-copy when the protocol
 improves.
+
+## Design
+
+Three layers, with one contract (the protocol) between the bottom two. The arrows are
+data flow; what you copy versus what you write is marked.
+
+```
+   ┌─ PROTOCOL.md ─ the contract every runner and the orchestrator agree on ─┐
+   │   in  (argv):   <buffer_bytes> <warmup_s> <measure_s>                    │
+   │   out (stdout): {"impl","bench","mbps","iters"}   one line per benchmark │
+   └─────────────────────────────────────────────────────────────────────────┘
+
+   1. MEASURE — native code, one runner per language
+      ┌───────────────────────────────────────────────┐
+      │  gota.<lang>    the harness        (copy as-is) │
+      │     bench(name, op): peak-of-batches timing     │
+      │          ▲  your op plugs in here               │
+      │  runner.<lang>  YOUR code                       │
+      │     run(impl, register) → b.bench(name, op)     │
+      └───────────────────────────────────────────────┘
+                       │  prints JSON lines on stdout
+                       ▼
+   2. ORCHESTRATE — Python, once, across all languages
+      ┌───────────────────────────────────────────────┐
+      │  run.py      YOUR config (RunnerSpecs, labels)  │
+      │  harness.py  the engine            (copy as-is) │
+      │     run_all(): build + invoke each runner       │
+      │     write_results(): collect JSON, tabulate     │
+      └───────────────────────────────────────────────┘
+                       │  writes
+                       ▼
+              results.json   +   RESULTS.md
+                       │
+   3. REPORT — optional, generic over the format
+      ┌────────────────▼──────────────────────────────┐
+      │  report.py  reads a results.json                │
+      │     → report.html: file picker, sortable,       │
+      │       formatted numbers (84.3 MB/s)             │
+      └───────────────────────────────────────────────┘
+```
+
+A runner (layer 1) is usable on its own; the orchestrator (layer 2) is only the
+conductor that runs them together and tabulates; the report (layer 3) is a pure
+consumer of `results.json`. You can stop at any layer.
 
 ## How to use it
 
@@ -112,6 +158,51 @@ any language-specific notes.
 
 For a complete worked consumer that ties several of these together, see
 [`examples/`](examples/).
+
+## HTML report
+
+`report.py` turns a `results.json` into a single self-contained `report.html` — no
+build step, no network, no dependencies. It is generic over the *format*: it renders
+only what the JSON carries (the impl/bench/mbps rows plus the machine/date/params
+provenance), so the same script works for any project.
+
+```
+python3 report.py results.json -o report.html --title "My project throughput"
+python3 report.py                 # empty viewer; load a results.json from the page
+```
+
+The page has a **file picker**, so one generated `report.html` can open any
+`results.json` you hand it later (drop the file in, it re-renders). Passing a
+`results.json` on the command line just embeds it so the page is populated on open.
+Numbers are formatted with units (`84.3 MB/s`, not `84.3`), columns sort on click, and
+the best value per column is highlighted. The example's report is committed at
+[`examples/report.html`](examples/report.html).
+
+## Using it in your own tooling
+
+Nothing here is a closed pipeline; pick the layer that fits and route the rest into
+your own systems (CI, a dashboard, a database, a PR comment):
+
+- **Just the numbers.** `harness.run_all(specs, buf, warmup, measure)` returns a plain
+  `list[dict]` (`{"impl","bench","mbps","iters"}`). Do whatever you want with it;
+  ignore the rest of the harness.
+- **The JSON document.** `harness.build_results_doc(rows, params=, meta=, units=)`
+  returns the `results.json` dict (rows + provenance). Serialize it where you like.
+- **The Markdown string.** `harness.render_markdown(rows, intro=, impl_order=, ...)`
+  returns the table as a string, for a PR comment or a docs page.
+- **Stream the outputs.** `harness.write_results(...)` accepts a path *or any open
+  writable stream* for each output, so you can send the JSON or Markdown to
+  `sys.stdout`, an `io.StringIO`, or an HTTP response body instead of a file:
+
+  ```python
+  import io, sys, harness
+  buf = io.StringIO()
+  harness.write_results(rows, buf, sys.stdout, params=..., meta=..., units=..., ...)
+  post_to_dashboard(buf.getvalue())   # the results.json text
+  ```
+
+- **The HTML.** Feed your `results.json` to `report.py` (above), or call
+  `report.build_html(doc, title)` to get the HTML string.
 
 ## What it is not
 

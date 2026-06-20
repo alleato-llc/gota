@@ -18,6 +18,15 @@ GOTA_BUF=131072 GOTA_WARMUP=0.5 GOTA_MEASURE=1.0 python3 run.py
 
 A runner whose toolchain is missing is skipped with a note, not an error.
 
+For an HTML view of the same data, generate the report from the results.json:
+
+```
+python3 ../report.py results.json -o report.html --title "Gota example: FNV-1a throughput"
+```
+
+[`report.html`](report.html) (committed) is a standalone, sortable viewer with a file
+picker, so it can also open any other `results.json` you load into it.
+
 ## What it measures
 
 FNV-1a over the buffer, in each language, as a stand-in for "your operation." FNV-1a

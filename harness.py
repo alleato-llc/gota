@@ -104,27 +104,25 @@ def gather_metadata() -> dict:
     }
 
 
-def write_results(
+def build_results_doc(rows: list[dict], *, params: dict, meta: dict, units: str) -> dict:
+    """The results.json document: provenance + params + the raw measurement rows.
+    This is the canonical, tooling-friendly shape; feed it to your own pipeline (a
+    dashboard, a database, the HTML viewer) instead of the Markdown if you prefer."""
+    return {**meta, "params": params, "units": units, "results": rows}
+
+
+def render_markdown(
     rows: list[dict],
-    out_json: str,
-    out_md: str,
     *,
-    params: dict,
-    meta: dict,
-    units: str,
+    intro: str,
     impl_order: list[str],
     impl_labels: dict[str, str],
     bench_order: list[str],
     bench_labels: dict[str, str],
-    intro: str,
-) -> None:
-    """Write results.json (raw + provenance) and a Markdown table. The orderings,
-    labels, and intro text are supplied by the caller, so this stays generic."""
-    doc = {**meta, "params": params, "units": units, "results": rows}
-    with open(out_json, "w") as f:
-        json.dump(doc, f, indent=2)
-        f.write("\n")
-
+) -> str:
+    """Render the results as a Markdown table and return it as a string (so callers can
+    route it anywhere: a file, a PR comment, a docs page). Orderings and labels are
+    supplied by the caller, so this stays generic."""
     by = {(r["impl"], r["bench"]): r["mbps"] for r in rows}
     present = [i for i in impl_order if any(r["impl"] == i for r in rows)]
 
@@ -138,7 +136,52 @@ def write_results(
             cells.append(f"{v:.1f}" if v is not None else "-")
         lines.append(f"| {impl_labels[impl]} | " + " | ".join(cells) + " |")
     lines.append("")
-    with open(out_md, "w") as f:
-        f.write("\n".join(lines))
+    return "\n".join(lines)
 
-    log(f"wrote {out_json} and {out_md} ({len(rows)} measurements, {len(present)} implementations)")
+
+def _write(target, text: str) -> str:
+    """Write `text` to a path (str/Path) or an already-open writable stream (anything
+    with a `.write`, e.g. sys.stdout, an io.StringIO, an HTTP response body). Returns a
+    display name for logging."""
+    if hasattr(target, "write"):
+        target.write(text)
+        return getattr(target, "name", "<stream>")
+    with open(target, "w") as f:
+        f.write(text)
+    return str(target)
+
+
+def write_results(
+    rows: list[dict],
+    out_json,
+    out_md,
+    *,
+    params: dict,
+    meta: dict,
+    units: str,
+    impl_order: list[str],
+    impl_labels: dict[str, str],
+    bench_order: list[str],
+    bench_labels: dict[str, str],
+    intro: str,
+) -> None:
+    """Convenience: write results.json (raw + provenance) and a Markdown table.
+
+    `out_json` and `out_md` may each be a path or an open writable stream, so the
+    output can go to files or straight into your own tooling. To integrate more
+    deeply, skip this and use `build_results_doc` / `render_markdown` directly, or just
+    consume the list of row dicts that `run_all` returns."""
+    json_name = _write(out_json, json.dumps(build_results_doc(rows, params=params, meta=meta, units=units), indent=2) + "\n")
+    md_name = _write(
+        out_md,
+        render_markdown(
+            rows,
+            intro=intro,
+            impl_order=impl_order,
+            impl_labels=impl_labels,
+            bench_order=bench_order,
+            bench_labels=bench_labels,
+        ),
+    )
+    present = len([i for i in impl_order if any(r["impl"] == i for r in rows)])
+    log(f"wrote {json_name} and {md_name} ({len(rows)} measurements, {present} implementations)")

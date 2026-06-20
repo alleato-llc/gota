@@ -7,11 +7,11 @@ This demonstrates the harness; it is not a serious language comparison. FNV-1a i
 trivial serial byte reduction, so these numbers reflect each compiler's handling of a
 tight scalar loop, nothing more.
 
-Machine: Apple M4 Max | Darwin arm64 | 2026-06-20 | commit 00511f9.
+Machine: Apple M4 Max | Darwin arm64 | 2026-06-20 | commit e5be0a2.
 
 | Implementation | FNV-1a 64 |
 | --- | ---: |
-| Rust | 1108.4 |
-| C | 1112.4 |
-| Go | 1108.6 |
+| Rust | 1105.5 |
+| C | 1116.4 |
+| Go | 1097.8 |
 | Python | 19.3 |
