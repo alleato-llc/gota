@@ -29,6 +29,62 @@ For each benchmark the runner:
 4. **measures**: runs that batch repeatedly for `measure_seconds`, and reports the
    **peak** `MB/s = buffer_bytes * batch / 1e6 / batch_seconds`.
 
+## The core idea: batch up an op too fast to time
+
+The operation under test is almost always *much* faster than the clock can resolve —
+hashing or encrypting a 64 KiB buffer takes nanoseconds to microseconds, while reading
+the clock itself costs comparable time (a vDSO call, sometimes a syscall). You cannot
+time a single such op directly: the measurement would be dominated by its own overhead.
+
+So we don't. We run the op `batch` times back-to-back as one unit and time the *whole
+batch*. A batch is sized so its combined time clears ~100ms — large enough that the two
+clock reads bracketing it, and the clock's own resolution, are negligible. The 100ms is
+a property of the **batch**, never of one op; the implicit expectation is *one op ≪
+100ms*, so `batch` must be ≫ 1 to reach it.
+
+This is sound because throughput is a *rate*, and batching does not distort a rate.
+`buffer_bytes × batch` bytes in `T` seconds is the same MB/s as `buffer_bytes` bytes in
+`T / batch` seconds — batching just shifts the measurement up to where the clock is
+trustworthy, and dividing by `batch_seconds` divides the inflation back out. What
+batching deliberately discards is per-call overhead (setup, call latency); that is out
+of scope here on purpose — this measures steady-state throughput of the op over a
+buffer, not the latency of a single call.
+
+### Sizing the batch (exponential search)
+
+Finding `batch` is **exponential (geometric) search**, the standard auto-calibration
+trick for "the thing I want to measure is faster than my clock": start at 1, time it,
+and keep doubling until one batch clears ~100ms.
+
+```
+batch = 1
+loop:
+    time the batch (run the op `batch` times)
+    if elapsed >= 100ms: stop, lock in this batch
+    batch *= 2
+```
+
+Doubling, rather than incrementing or estimating directly, buys three things:
+
+- **O(log N) probes** to reach any batch size — the example's `batch ≈ 16384` is found
+  in 15 doublings, not 16384 increments.
+- **Bounded overshoot** — the final batch lands in `[100ms, 200ms)`, never more than 2×
+  past target. The exact value does not matter (it cancels out of the rate); it only
+  has to clear the floor, and doubling clears it fast without wild overshoot.
+- **No prior knowledge of the op's speed** — the same template self-calibrates across a
+  ~200× range of implementation speeds, which is exactly why the buffer size can stay
+  fixed (see below). These calibration timings are thrown away; only the chosen `batch`
+  survives into the measure phase, where it stays constant.
+
+Go's `testing.B` (grow `b.N` until the run is long enough), JMH, and criterion all use
+the same family of trick for the same reason.
+
+The harness's sweet spot follows directly: ops in the **nanosecond-to-millisecond** per
+call range batch up cleanly and yield many samples. An op that *already* takes >100ms
+per call breaks the loop at `batch = 1` — it still runs, but you get few samples and
+lose the benefit of peak-of-batches; that regime wants a different tool (a few timed
+runs with explicit outlier handling), not this one.
+
 ## Why these choices (the lessons)
 
 These are not arbitrary; each fixes a real failure observed in practice.

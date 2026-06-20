@@ -10,6 +10,12 @@ PR**, grouped under Added / Changed / Fixed / Removed.
 
 ## [Unreleased]
 
+### Added
+
+- `PROTOCOL.md`: a "core idea" section explaining *why* the loop batches (timing an op
+  faster than the clock, and why batching a rate is lossless) and naming the batch-
+  sizing algorithm (exponential/geometric search), with its trade-offs and sweet spot.
+
 ### Changed
 
 - `README.md`: the "Using it in your own tooling" stream-outputs example now shows both
