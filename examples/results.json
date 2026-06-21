@@ -2,7 +2,7 @@
   "machine": "Apple M4 Max",
   "os": "Darwin arm64",
   "date": "2026-06-21",
-  "git_commit": "4f19ad5",
+  "git_commit": "eeef984",
   "toolchains": {
     "rust": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
     "c": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
@@ -24,57 +24,57 @@
     {
       "impl": "python",
       "bench": "fnv1a-64",
-      "mbps": 19.4,
-      "mbps_median": 19.18,
+      "mbps": 19.66,
+      "mbps_median": 19.49,
       "iters": 448
     },
     {
       "impl": "c",
       "bench": "fnv1a-64",
-      "mbps": 1098.73,
-      "mbps_median": 1095.99,
+      "mbps": 1118.19,
+      "mbps_median": 1107.71,
       "iters": 26624
     },
     {
       "impl": "go",
       "bench": "fnv1a-64",
-      "mbps": 1099.99,
-      "mbps_median": 1087.39,
+      "mbps": 1114.34,
+      "mbps_median": 1110.11,
       "iters": 26624
     },
     {
       "impl": "rust",
       "bench": "fnv1a-64",
-      "mbps": 1090.59,
-      "mbps_median": 1069.08,
-      "iters": 24576
+      "mbps": 1117.51,
+      "mbps_median": 1112.04,
+      "iters": 26624
     },
     {
       "impl": "zig",
       "bench": "fnv1a-64",
-      "mbps": 1097.79,
-      "mbps_median": 1089.27,
+      "mbps": 1115.22,
+      "mbps_median": 1111.57,
       "iters": 26624
     },
     {
       "impl": "java",
       "bench": "fnv1a-64",
-      "mbps": 1096.63,
-      "mbps_median": 1092.03,
+      "mbps": 1117.15,
+      "mbps_median": 1110.83,
       "iters": 26624
     },
     {
       "impl": "ts",
       "bench": "fnv1a-64",
-      "mbps": 85.56,
-      "mbps_median": 80.49,
+      "mbps": 86.64,
+      "mbps_median": 81.6,
       "iters": 1920
     },
     {
       "impl": "haskell",
       "bench": "fnv1a-64",
-      "mbps": 1100.19,
-      "mbps_median": 1090.64,
+      "mbps": 1113.13,
+      "mbps_median": 1107.57,
       "iters": 26624
     }
   ]

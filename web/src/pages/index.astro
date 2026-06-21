@@ -342,6 +342,53 @@ const approachRows = [
     </div>
   </section>
 
+  <section id="hazard">
+    <div class="wrap">
+      <h2>The easiest way to measure nothing</h2>
+      <p class="sub">
+        The classic micro-benchmark trap: if nothing observes your operation's
+        result, an optimizing compiler is free to delete the whole computation — and
+        you measure nanoseconds of nothing, a confident wrong number. gota's templates
+        guard against it in every language.
+      </p>
+      <div class="layers">
+        <div class="layer">
+          <div>
+            <b>Compiled languages — dead-code elimination.</b>
+            <span>
+              {" "}In C, Rust, Go, and Zig a result that is never read can be optimized
+              away under <code>-O2</code>. Each runner consumes its op's result through a
+              one-byte sink, so the work has to survive.
+            </span>
+          </div>
+        </div>
+        <div class="layer">
+          <div>
+            <b>Haskell — laziness.</b>
+            <span>
+              {" "}The sharpest case: in a lazy language an unforced computation is a
+              thunk that never runs, and an invariant one is computed once and shared.
+              The harness threads each result into the next call and forces it, so the
+              work can be neither deferred nor shared. Same hazard, made a language
+              requirement.
+            </span>
+          </div>
+        </div>
+        <div class="layer">
+          <div>
+            <b>Why it matters here.</b>
+            <span>
+              {" "}Peak-of-batches is only honest if the batches did real work. The sink
+              discipline is what keeps the number a measurement instead of a fiction — the
+              same reason every <code>runner.*</code> carries a sink and Haskell's seam is
+              shaped the way it is.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="honest">
     <div class="wrap">
       <h2>Honest by design</h2>

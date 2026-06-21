@@ -24,6 +24,11 @@ every component is in [VERSIONS.md](../VERSIONS.md).
   example report, served from `public/` (soroban-style): one self-contained
   `report.html` with a MB/s ⇄ ops/sec toggle, so a single page shows the same FNV run in
   both units.
+- Haskell added as the eighth language: a card in the languages grid, a row in the
+  build-commands table, and the "seven languages" copy updated to eight throughout.
+- A "The easiest way to measure nothing" section (and a `Pitfalls` nav link) on the
+  dead-code-elimination / laziness hazard and gota's sink discipline — non-obvious, and
+  the reason Haskell's seam threads-and-forces an accumulator.
 
 ### Changed
 
