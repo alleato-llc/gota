@@ -41,6 +41,9 @@ working *on* Gota.
 - `examples/` — a complete miniature consumer (Rust, C, Go, Python) driven by a copy of
   `harness.py` and an `examples/run.py`, producing a generated `RESULTS.md`,
   `results.json`, and `report.html`. FNV-1a is the stand-in op.
+- `CHANGELOG.md` + `templates/<lang>/CHANGELOG.md` + `VERSIONS.md` — versioning is
+  per-component: a core changelog (protocol, harness, report, examples, docs), a
+  changelog per language template, and a master table of every component's semver.
 
 ## The core invariant: keep the languages equivalent
 
@@ -109,7 +112,13 @@ contract).
   implementations, optimistic for real-world latency. Naive code shows
   language/runtime overhead, not how fast tuned/SIMD code can go. Say so.
 - Keep `PROTOCOL.md`, `README.md`, and the per-language READMEs in step with the code.
-- **Update the changelog as you go.** Any change worth noting adds a bullet to the
-  `Unreleased` section of `CHANGELOG.md` (grouped under Added / Changed / Fixed /
-  Removed) in the same commit or PR.
+- **Update the changelog as you go, routed by what you touched.** A change to the
+  protocol, `harness.py`, `report.py`, `report_template.html`, `examples/`, or shared
+  docs adds a bullet to the core `CHANGELOG.md`; a change to a single `templates/<lang>/`
+  goes in that language's `templates/<lang>/CHANGELOG.md`. A protocol/core change that
+  ripples into the templates is recorded once in the core log and pointed to from each
+  affected language log (don't duplicate the rationale seven times). Add the bullet
+  under Added / Changed / Fixed / Removed in the same commit or PR, and bump the
+  component's version in `VERSIONS.md` when you cut a release. `VERSIONS.md` is the
+  master table of every component and its current semver.
 - Direct prose, minimal ceremony. Educational and unaudited; MIT licensed.

@@ -252,10 +252,15 @@ your own systems (CI, a dashboard, a database, a PR comment):
 
 ## Changelog
 
-Notable changes are recorded in [`CHANGELOG.md`](CHANGELOG.md)
-([Keep a Changelog](https://keepachangelog.com/) format). **Rule:** any change worth
-noting updates the `Unreleased` section of `CHANGELOG.md` in the *same commit or PR* —
-treat it as part of the change, not an afterthought.
+Gota is versioned **per component** — a change to one language template (or to the
+example) doesn't move the others. [`VERSIONS.md`](VERSIONS.md) is the master table of
+every component and its semver. Cross-cutting changes (protocol, `harness.py`,
+`report.py`, `report_template.html`, `examples/`, docs) are in the core
+[`CHANGELOG.md`](CHANGELOG.md); each language template has its own
+`templates/<lang>/CHANGELOG.md`. All use [Keep a Changelog](https://keepachangelog.com/)
+format. **Rule:** any change worth noting updates the `Unreleased` section of the
+changelog for whatever it touches, in the *same commit or PR* — treat it as part of the
+change, not an afterthought.
 
 ## Origin
 
