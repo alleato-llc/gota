@@ -104,27 +104,25 @@ def gather_metadata() -> dict:
     }
 
 
-def write_results(
+def build_results_doc(rows: list[dict], *, params: dict, meta: dict, units: str) -> dict:
+    """The results.json document: provenance + params + the raw measurement rows.
+    This is the canonical, tooling-friendly shape; feed it to your own pipeline (a
+    dashboard, a database, the HTML viewer) instead of the Markdown if you prefer."""
+    return {**meta, "params": params, "units": units, "results": rows}
+
+
+def render_markdown(
     rows: list[dict],
-    out_json: str,
-    out_md: str,
     *,
-    params: dict,
-    meta: dict,
-    units: str,
+    intro: str,
     impl_order: list[str],
     impl_labels: dict[str, str],
     bench_order: list[str],
     bench_labels: dict[str, str],
-    intro: str,
-) -> None:
-    """Write results.json (raw + provenance) and a Markdown table. The orderings,
-    labels, and intro text are supplied by the caller, so this stays generic."""
-    doc = {**meta, "params": params, "units": units, "results": rows}
-    with open(out_json, "w") as f:
-        json.dump(doc, f, indent=2)
-        f.write("\n")
-
+) -> str:
+    """Render the results as a Markdown table and return it as a string (so callers can
+    route it anywhere: a file, a PR comment, a docs page). Orderings and labels are
+    supplied by the caller, so this stays generic."""
     by = {(r["impl"], r["bench"]): r["mbps"] for r in rows}
     present = [i for i in impl_order if any(r["impl"] == i for r in rows)]
 
@@ -138,7 +136,201 @@ def write_results(
             cells.append(f"{v:.1f}" if v is not None else "-")
         lines.append(f"| {impl_labels[impl]} | " + " | ".join(cells) + " |")
     lines.append("")
-    with open(out_md, "w") as f:
-        f.write("\n".join(lines))
+    return "\n".join(lines)
 
-    log(f"wrote {out_json} and {out_md} ({len(rows)} measurements, {len(present)} implementations)")
+
+def _write(target, text: str) -> str:
+    """Write `text` to a path (str/Path) or an already-open writable stream (anything
+    with a `.write`, e.g. sys.stdout, an io.StringIO, an HTTP response body). Returns a
+    display name for logging."""
+    if hasattr(target, "write"):
+        target.write(text)
+        return getattr(target, "name", "<stream>")
+    with open(target, "w") as f:
+        f.write(text)
+    return str(target)
+
+
+def write_results(
+    rows: list[dict],
+    out_json,
+    out_md,
+    *,
+    params: dict,
+    meta: dict,
+    units: str,
+    impl_order: list[str],
+    impl_labels: dict[str, str],
+    bench_order: list[str],
+    bench_labels: dict[str, str],
+    intro: str,
+) -> None:
+    """Convenience: write results.json (raw + provenance) and a Markdown table.
+
+    `out_json` and `out_md` may each be a path or an open writable stream, so the
+    output can go to files or straight into your own tooling. To integrate more
+    deeply, skip this and use `build_results_doc` / `render_markdown` directly, or just
+    consume the list of row dicts that `run_all` returns."""
+    json_name = _write(out_json, json.dumps(build_results_doc(rows, params=params, meta=meta, units=units), indent=2) + "\n")
+    md_name = _write(
+        out_md,
+        render_markdown(
+            rows,
+            intro=intro,
+            impl_order=impl_order,
+            impl_labels=impl_labels,
+            bench_order=bench_order,
+            bench_labels=bench_labels,
+        ),
+    )
+    present = len([i for i in impl_order if any(r["impl"] == i for r in rows)])
+    log(f"wrote {json_name} and {md_name} ({len(rows)} measurements, {present} implementations)")
+
+
+# --- Comparison: baseline vs one or more candidate runs ---------------------------
+#
+# A results.json is a single run. To track a baseline against later runs (regression
+# gating, before/after) you compare runs *on top of* that format without changing it:
+# match cells by (impl, bench) and report the ratio. Two honesty rules are built in
+# because they are easy to get wrong: a change within a noise band is not a regression
+# (peak-of-batches still has variance), and comparing across different machines or
+# params is apples-to-oranges, so provenance mismatches are surfaced as warnings rather
+# than silently turned into a meaningless delta.
+
+
+def _index(doc: dict) -> dict:
+    """Map (impl, bench) -> mbps for a results doc."""
+    return {(r["impl"], r["bench"]): r["mbps"] for r in doc.get("results", [])}
+
+
+def _union_order(docs: list[dict], key: str) -> list[str]:
+    """Distinct `key` values across docs, baseline first, preserving first-seen order."""
+    seen, order = set(), []
+    for doc in docs:
+        for r in doc.get("results", []):
+            if r[key] not in seen:
+                seen.add(r[key])
+                order.append(r[key])
+    return order
+
+
+def _provenance_warnings(baseline: dict, cand: dict) -> list[str]:
+    """Flag baseline/candidate differences that make a numeric delta misleading."""
+    warnings = []
+    for field, what in (("machine", "machine"), ("os", "OS")):
+        if baseline.get(field) and cand.get(field) and baseline[field] != cand[field]:
+            warnings.append(f"{what} differs ({baseline[field]} vs {cand[field]}) — deltas are not comparable")
+    bp, cp = baseline.get("params", {}), cand.get("params", {})
+    for k in sorted(set(bp) | set(cp)):
+        if bp.get(k) != cp.get(k):
+            warnings.append(f"param {k} differs ({bp.get(k)} vs {cp.get(k)}) — runs measure different work")
+    if baseline.get("units") and cand.get("units") and baseline["units"] != cand["units"]:
+        warnings.append(f"units differ ({baseline['units']} vs {cand['units']})")
+    return warnings
+
+
+def compare_runs(baseline: dict, candidates: list[dict], *, tolerance: float = 0.02) -> dict:
+    """Compare each candidate results doc against `baseline`, cell by (impl, bench).
+
+    `tolerance` is the fractional noise band: a change within ±tolerance is reported as
+    `same`, not faster/slower, so ordinary run-to-run jitter is not called a regression.
+    Returns a dict with the union `impls`/`benches` (baseline first) and, per candidate,
+    a flat list of cell deltas plus any provenance `warnings`. Each cell carries
+    `base`, `cand`, `ratio` (cand/base), `pct` (percent change), and `status` (one of
+    faster/slower/same/new/gone). Callers apply their own gate threshold to `pct`."""
+    base_idx = _index(baseline)
+    impls = _union_order([baseline, *candidates], "impl")
+    benches = _union_order([baseline, *candidates], "bench")
+    runs = []
+    for cand in candidates:
+        cand_idx = _index(cand)
+        cells = []
+        for impl in impls:
+            for bench in benches:
+                b, c = base_idx.get((impl, bench)), cand_idx.get((impl, bench))
+                if b is None and c is None:
+                    continue
+                cell = {"impl": impl, "bench": bench, "base": b, "cand": c}
+                if b is None:
+                    cell.update(ratio=None, pct=None, status="new")
+                elif c is None:
+                    cell.update(ratio=None, pct=None, status="gone")
+                else:
+                    ratio = c / b if b else None
+                    cell["ratio"] = ratio
+                    cell["pct"] = (ratio - 1) * 100 if ratio is not None else None
+                    cell["status"] = "faster" if ratio >= 1 + tolerance else "slower" if ratio <= 1 - tolerance else "same"
+                cells.append(cell)
+        runs.append({
+            "label": cand.get("label") or cand.get("git_commit") or cand.get("date") or "candidate",
+            "machine": cand.get("machine"),
+            "git_commit": cand.get("git_commit"),
+            "date": cand.get("date"),
+            "warnings": _provenance_warnings(baseline, cand),
+            "cells": cells,
+        })
+    return {
+        "baseline": {
+            "label": baseline.get("label") or baseline.get("git_commit") or baseline.get("date") or "baseline",
+            "machine": baseline.get("machine"),
+            "git_commit": baseline.get("git_commit"),
+            "date": baseline.get("date"),
+        },
+        "tolerance": tolerance,
+        "impls": impls,
+        "benches": benches,
+        "runs": runs,
+    }
+
+
+def regressions(comparison: dict, *, threshold_pct: float) -> list[dict]:
+    """Cells that dropped more than `threshold_pct` percent below baseline, across all
+    candidate runs (each annotated with its run `label`). Empty list means no run
+    regressed past the threshold — use it for a CI gate's exit code."""
+    out = []
+    for run in comparison["runs"]:
+        for cell in run["cells"]:
+            if cell["pct"] is not None and cell["pct"] < -abs(threshold_pct):
+                out.append({**cell, "label": run["label"]})
+    return out
+
+
+def render_comparison_markdown(comparison: dict) -> str:
+    """Render a comparison (from `compare_runs`) as Markdown: one pivot table per
+    candidate, each cell `value (±pct%)`, with a ⚠ on changes past the tolerance band
+    and any provenance warnings called out above the table. Returns a string for a PR
+    comment or a docs page."""
+    benches = comparison["benches"]
+    tol = comparison["tolerance"] * 100
+    base = comparison["baseline"]
+    base_bits = " · ".join(b for b in (base["machine"], base["git_commit"] and f"commit {base['git_commit']}", base["date"]) if b)
+    lines = ["# Benchmark comparison", ""]
+    lines.append(f"Baseline: **{base['label']}**" + (f" ({base_bits})" if base_bits else ""))
+    lines.append(f"Tolerance: ±{tol:.1f}% (changes within the band are not flagged)")
+    lines.append("")
+    mark = {"faster": "▲", "slower": "▼ ⚠", "same": "", "new": "new", "gone": "gone"}
+    for run in comparison["runs"]:
+        lines.append(f"## {run['label']} vs baseline")
+        for w in run["warnings"]:
+            lines.append(f"> ⚠️ {w}")
+        if run["warnings"]:
+            lines.append("")
+        cells = {(c["impl"], c["bench"]): c for c in run["cells"]}
+        impls = [i for i in comparison["impls"] if any((i, b) in cells for b in benches)]
+        lines.append("| Implementation | " + " | ".join(benches) + " |")
+        lines.append("| --- | " + " | ".join("---:" for _ in benches) + " |")
+        for impl in impls:
+            out = []
+            for bench in benches:
+                c = cells.get((impl, bench))
+                if c is None:
+                    out.append("-")
+                elif c["status"] == "new":
+                    out.append(f"{c['cand']:.1f} (new)")
+                elif c["status"] == "gone":
+                    out.append("gone")
+                else:
+                    out.append(f"{c['cand']:.1f} ({c['pct']:+.1f}%) {mark[c['status']]}".strip())
+            lines.append(f"| {impl} | " + " | ".join(out) + " |")
+        lines.append("")
+    return "\n".join(lines)

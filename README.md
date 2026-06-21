@@ -182,6 +182,27 @@ magnitude bar tinted with a per-language color; columns sort on click; and the b
 value per column is starred. The example's report is committed at
 [`examples/report.html`](examples/report.html).
 
+### Comparing runs to a baseline
+
+Pass two or more `results.json` files to compare later runs against a baseline (the
+first file, or whichever you name with `--baseline`):
+
+```
+python3 report.py base.json new.json                       # diff report.html
+python3 report.py base.json a.json b.json --baseline base.json
+python3 report.py base.json new.json --markdown            # delta table to stdout
+python3 report.py base.json new.json --fail-on-regression 5  # exit 1 if >5% slower
+```
+
+The HTML then opens in **comparison mode**: a baseline values table plus, per candidate,
+a delta table with color-graded `+/-%` per cell. You can drop more files in from the
+page and re-pick the baseline live. Two honesty guardrails are built in: a change within
+the `--tolerance` noise band (default ±2%) is not flagged (peak-of-batches still has
+variance), and comparing across **different machines or params** is called out as a loud
+warning rather than shown as a meaningful delta. `--markdown` emits the same comparison
+for a PR comment; `--fail-on-regression PCT` makes it a CI gate (non-zero exit if any
+cell drops more than `PCT`% below baseline).
+
 ## Using it in your own tooling
 
 Nothing here is a closed pipeline; pick the layer that fits and route the rest into
@@ -215,6 +236,11 @@ your own systems (CI, a dashboard, a database, a PR comment):
 
 - **The HTML.** Feed your `results.json` to `report.py` (above), or call
   `report.build_html(doc, title)` to get the HTML string.
+- **A baseline comparison.** `harness.compare_runs(baseline, candidates, tolerance=)`
+  returns per-`(impl,bench)` deltas (with provenance-mismatch warnings);
+  `harness.render_comparison_markdown(cmp)` turns it into a delta table for a PR comment,
+  and `harness.regressions(cmp, threshold_pct=)` is the list a CI gate keys its exit code
+  off. The `report.py` flags above (`--markdown`, `--fail-on-regression`) wrap these.
 
 ## What it is not
 

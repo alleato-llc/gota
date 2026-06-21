@@ -93,6 +93,13 @@
   code { background: color-mix(in srgb, var(--card) 70%, var(--accent)); border-radius: 5px; padding: .05rem .35rem; }
   .legend { display: flex; gap: .5rem 1rem; flex-wrap: wrap; align-items: center; margin-top: .6rem; }
   .legend .pill { font-size: .8rem; }
+  .chead { font-size: 1.05rem; margin: .1rem 0 .7rem; }
+  .chead .muted { font-size: .85rem; font-weight: 400; }
+  .warn { color: #b45309; font-size: .85rem; margin: .1rem 0 .5rem; }
+  @media (prefers-color-scheme: dark) { .warn { color: #fbbf24; } }
+  .delta { margin-left: .5rem; font-size: .82rem; font-variant-numeric: tabular-nums; opacity: .85; }
+  .tag { font-size: .75rem; color: var(--muted); }
+  select { font: inherit; padding: .2rem .45rem; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
   footer { margin-top: 1.5rem; }
 </style>
 </head>
@@ -102,7 +109,8 @@
 
   <div class="card">
     <div class="controls">
-      <label><strong>Load results.json:</strong> <input type="file" id="file" accept=".json,application/json"></label>
+      <label><strong>Load results.json:</strong> <input type="file" id="file" multiple accept=".json,application/json"></label>
+      <span class="muted">pick two or more to compare against a baseline</span>
       <span class="muted" id="status"></span>
     </div>
   </div>
@@ -116,7 +124,7 @@
   </footer>
 
 <script>
-const EMBEDDED = {"machine": "Apple M4 Max", "os": "Darwin arm64", "date": "2026-06-20", "git_commit": "e5be0a2", "params": {"buffer_bytes": 65536, "warmup_s": 0.5, "measure_s": 1.5}, "units": "MB/s (decimal, 1e6 bytes), peak of batches", "results": [{"impl": "python", "bench": "fnv1a-64", "mbps": 19.31, "iters": 448}, {"impl": "c", "bench": "fnv1a-64", "mbps": 1116.44, "iters": 26624}, {"impl": "go", "bench": "fnv1a-64", "mbps": 1097.78, "iters": 26624}, {"impl": "rust", "bench": "fnv1a-64", "mbps": 1105.54, "iters": 26624}]};
+const EMBEDDED = {"machine": "Apple M4 Max", "os": "Darwin arm64", "date": "2026-06-20", "git_commit": "e5be0a2", "params": {"buffer_bytes": 65536, "warmup_s": 0.5, "measure_s": 1.5}, "units": "MB/s (decimal, 1e6 bytes), peak of batches", "results": [{"impl": "python", "bench": "fnv1a-64", "mbps": 19.31, "iters": 448}, {"impl": "c", "bench": "fnv1a-64", "mbps": 1116.44, "iters": 26624}, {"impl": "go", "bench": "fnv1a-64", "mbps": 1097.78, "iters": 26624}, {"impl": "rust", "bench": "fnv1a-64", "mbps": 1105.54, "iters": 26624}], "label": "results"};
 
 // A small, distinct, colorblind-friendly-ish palette assigned per implementation.
 const PALETTE = ["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#f43f5e", "#8b5cf6", "#14b8a6", "#f97316", "#0ea5e9", "#84cc16"];
@@ -139,15 +147,42 @@ function pivot(doc) {
 
 let state = null;
 
-function render(doc) {
+// Loaded runs accumulate here; one run renders the single-run view, two or more render
+// the comparison view. `baselineLabel`/`tolerance` come from a report.py-embedded
+// comparison wrapper, or default, and the in-page baseline picker can change them.
+let loadedRuns = [];
+let baselineLabel = null;
+let tolerance = 0.02;
+
+function ingest(docs, opts) {
+  opts = opts || {};
+  for (const d of docs) {
+    if (!d) continue;
+    if (!d.label) d.label = "run " + (loadedRuns.length + 1);
+    const i = loadedRuns.findIndex(r => r.label === d.label);
+    if (i >= 0) loadedRuns[i] = d; else loadedRuns.push(d);
+  }
+  if (opts.tolerance != null) tolerance = opts.tolerance;
+  if (opts.baseline) baselineLabel = opts.baseline;
+  if (!baselineLabel && loadedRuns.length) baselineLabel = loadedRuns[0].label;
+  show();
+}
+
+function show() {
   const status = document.getElementById("status");
-  if (!doc || !(doc.results || []).length) {
+  if (!loadedRuns.length) {
     document.getElementById("report").innerHTML =
       '<div class="card muted">No data loaded. Choose a results.json above.</div>';
     document.getElementById("subtitle").textContent = "";
     status.textContent = "";
     return;
   }
+  if (loadedRuns.length === 1) renderSingle(loadedRuns[0]);
+  else renderComparison();
+}
+
+function renderSingle(doc) {
+  const status = document.getElementById("status");
   const { impls, benches, by } = pivot(doc);
   const unit = (doc.units || "").split(/\s+/)[0] || "";
   const color = {};
@@ -224,18 +259,145 @@ function drawTable() {
   });
 }
 
+// --- Comparison view: a baseline run plus one or more candidate runs ---------------
+
+function indexDoc(doc) {
+  const by = {};
+  for (const r of (doc.results || [])) (by[r.impl] = by[r.impl] || {})[r.bench] = r.mbps;
+  return by;
+}
+
+// Surface differences that make a numeric delta misleading, rather than hiding them.
+function provenanceWarnings(base, cand) {
+  const w = [];
+  if (base.machine && cand.machine && base.machine !== cand.machine)
+    w.push(`machine differs (${base.machine} vs ${cand.machine}) — deltas are not comparable`);
+  if (base.os && cand.os && base.os !== cand.os)
+    w.push(`OS differs (${base.os} vs ${cand.os})`);
+  const bp = base.params || {}, cp = cand.params || {};
+  for (const k of [...new Set([...Object.keys(bp), ...Object.keys(cp)])].sort())
+    if (String(bp[k]) !== String(cp[k]))
+      w.push(`param ${k} differs (${bp[k]} vs ${cp[k]}) — runs measure different work`);
+  if (base.units && cand.units && base.units !== cand.units)
+    w.push(`units differ (${base.units} vs ${cand.units})`);
+  return w;
+}
+
+function deltaStyle(pct) {
+  const band = tolerance * 100;
+  if (pct >= band || pct <= -band) {
+    const a = Math.min(0.42, 0.06 + Math.abs(pct) / 40 * 0.42);
+    return `background: rgba(${pct > 0 ? "16,185,129" : "244,63,94"},${a.toFixed(3)})`;
+  }
+  return "";
+}
+
+function valuesTable(impls, benches, by, color, unit) {
+  const best = {};
+  for (const b of benches) best[b] = Math.max(...impls.map(i => (by[i] || {})[b]).filter(v => v != null));
+  let h = "<table><thead><tr><th>Implementation</th>" + benches.map(b => `<th>${b}</th>`).join("") + "</tr></thead><tbody>";
+  for (const i of impls) {
+    h += `<tr style="--row:${color[i]}"><td><span class="pill" style="background:${color[i]}">${i}</span></td>`;
+    for (const b of benches) {
+      const v = (by[i] || {})[b];
+      if (v == null) { h += "<td>—</td>"; continue; }
+      const p = best[b] > 0 ? Math.max(2, v / best[b] * 100) : 0;
+      h += `<td class="${v === best[b] ? "best" : ""}"><div class="cell"><div class="bar" style="width:${p}%"></div><span class="val">${fmt(v, unit)}</span></div></td>`;
+    }
+    h += "</tr>";
+  }
+  return h + "</tbody></table>";
+}
+
+function deltaTable(impls, benches, baseBy, candBy, color, unit) {
+  let h = "<table><thead><tr><th>Implementation</th>" + benches.map(b => `<th>${b}</th>`).join("") + "</tr></thead><tbody>";
+  for (const i of impls) {
+    h += `<tr style="--row:${color[i]}"><td><span class="pill" style="background:${color[i]}">${i}</span></td>`;
+    for (const b of benches) {
+      const base = (baseBy[i] || {})[b], cand = (candBy[i] || {})[b];
+      if (base == null && cand == null) { h += "<td>—</td>"; continue; }
+      if (base == null) { h += `<td><div class="cell"><span class="val">${fmt(cand, unit)}</span><span class="tag">&nbsp;new</span></div></td>`; continue; }
+      if (cand == null) { h += `<td><span class="tag">gone</span></td>`; continue; }
+      const pct = (cand / base - 1) * 100;
+      h += `<td style="${deltaStyle(pct)}"><div class="cell"><span class="val" title="${fmt(base, unit)} → ${fmt(cand, unit)}">${fmt(cand, unit)}</span><span class="delta">${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%</span></div></td>`;
+    }
+    h += "</tr>";
+  }
+  return h + "</tbody></table>";
+}
+
+function renderComparison() {
+  let base = loadedRuns.find(r => r.label === baselineLabel);
+  if (!base) { base = loadedRuns[0]; baselineLabel = base.label; }
+  const cands = loadedRuns.filter(r => r !== base);
+  const unit = (base.units || "").split(/\s+/)[0] || "";
+
+  const impls = [], benches = [];
+  for (const d of [base, ...cands]) for (const r of (d.results || [])) {
+    if (!impls.includes(r.impl)) impls.push(r.impl);
+    if (!benches.includes(r.bench)) benches.push(r.bench);
+  }
+  const color = {};
+  impls.forEach((i, k) => color[i] = PALETTE[k % PALETTE.length]);
+
+  document.getElementById("subtitle").textContent = "comparison · baseline " + base.label;
+  document.getElementById("status").textContent =
+    `${loadedRuns.length} runs · ${impls.length} implementations · ${benches.length} benchmarks`;
+
+  const opts = loadedRuns.map(r => `<option ${r.label === baselineLabel ? "selected" : ""}>${r.label}</option>`).join("");
+  const legend = impls.map(i => `<span class="pill" style="background:${color[i]}">${i}</span>`).join("");
+  let html = `<div class="card"><div class="meta-grid">
+    <dt>baseline</dt><dd><select id="baseline">${opts}</select></dd>
+    ${base.machine ? `<dt>machine</dt><dd>${base.machine}</dd>` : ""}
+    ${base.units ? `<dt>units</dt><dd>${base.units}</dd>` : ""}
+    <dt>tolerance</dt><dd>±${(tolerance * 100).toFixed(1)}% — changes within the band are not flagged</dd>
+  </div><div class="legend">${legend}</div></div>`;
+
+  const baseBy = indexDoc(base);
+  html += `<div class="card"><div class="chead">${base.label} <span class="muted">(baseline)</span></div>`
+        + valuesTable(impls, benches, baseBy, color, unit) + "</div>";
+
+  for (const c of cands) {
+    const warns = provenanceWarnings(base, c).map(w => `<div class="warn">⚠️ ${w}</div>`).join("");
+    html += `<div class="card"><div class="chead">${c.label} <span class="muted">vs ${base.label}</span></div>${warns}`
+          + deltaTable(impls, benches, baseBy, indexDoc(c), color, unit) + "</div>";
+  }
+
+  document.getElementById("report").innerHTML = html;
+  const sel = document.getElementById("baseline");
+  if (sel) sel.addEventListener("change", () => { baselineLabel = sel.value; show(); });
+}
+
 document.getElementById("file").addEventListener("change", e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try { render(JSON.parse(reader.result)); }
-    catch (err) { document.getElementById("status").textContent = "Could not parse: " + err.message; }
-  };
-  reader.readAsText(f);
+  const files = [...e.target.files];
+  if (!files.length) return;
+  let pending = files.length;
+  const collected = [];
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (parsed && parsed.runs) {
+          if (parsed.baseline) baselineLabel = parsed.baseline;
+          if (parsed.tolerance != null) tolerance = parsed.tolerance;
+          collected.push(...parsed.runs);
+        } else {
+          if (!parsed.label) parsed.label = f.name.replace(/\.json$/, "");
+          collected.push(parsed);
+        }
+      } catch (err) {
+        document.getElementById("status").textContent = "Could not parse " + f.name + ": " + err.message;
+      }
+      if (--pending === 0) ingest(collected, {});
+    };
+    reader.readAsText(f);
+  });
 });
 
-render(EMBEDDED);
+if (EMBEDDED && EMBEDDED.runs) ingest(EMBEDDED.runs, { baseline: EMBEDDED.baseline, tolerance: EMBEDDED.tolerance });
+else if (EMBEDDED) ingest([EMBEDDED], {});
+else show();
 </script>
 </body>
 </html>

@@ -12,6 +12,13 @@ PR**, grouped under Added / Changed / Fixed / Removed.
 
 ### Added
 
+- Baseline/multi-run comparison. `harness.py` gains `compare_runs`,
+  `render_comparison_markdown`, and `regressions` (per-`(impl,bench)` deltas with a
+  noise-band tolerance and provenance/param mismatch warnings). `report.py` accepts two
+  or more results files with `--baseline`, embedding a comparison view in the HTML, and
+  adds `--markdown` (delta table to stdout) and `--fail-on-regression PCT` (CI exit-code
+  gate). `report_template.html` gains a comparison mode: multi-file load, a baseline
+  picker, color-graded deltas, and loud machine/param mismatch warnings.
 - `PROTOCOL.md`: a "core idea" section explaining *why* the loop batches (timing an op
   faster than the clock, and why batching a rate is lossless) and naming the batch-
   sizing algorithm (exponential/geometric search), with its trade-offs and sweet spot.
@@ -24,6 +31,10 @@ PR**, grouped under Added / Changed / Fixed / Removed.
 
 ### Fixed
 
+- `examples/harness.py` was a stale copy that predated the stream-output refactor (it
+  lacked `build_results_doc`/`render_markdown`/stream support). Re-synced it to the root
+  `harness.py` so the in-repo consumer reflects the current orchestrator (now including
+  the comparison helpers); `examples/report.html` regenerated against the new template.
 - `report_template.html`: the documentation comment listed the substitution tokens
   verbatim, so `report.py`'s `.replace()` dumped the title/data/date into the comment.
   Reworded the comment so it no longer contains the literal tokens.

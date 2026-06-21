@@ -20,7 +20,9 @@ working *on* Gota.
   runner as a subprocess under identical params, collect their JSON), `gather_metadata`
   (machine/os/date/git provenance), and the output helpers `build_results_doc`,
   `render_markdown`, and `write_results` (which accepts a path or any writable stream).
-  Nothing project-specific lives here.
+  Also the comparison helpers `compare_runs` / `render_comparison_markdown` /
+  `regressions` (a baseline vs one or more candidate runs, with a noise-band tolerance
+  and provenance-mismatch warnings). Nothing project-specific lives here.
 - `templates/<lang>/` — two files per language plus a README:
   - `gota.*` is the **harness**: the peak-of-batches `bench()` loop, arg parsing,
     buffer allocation, and JSON output. A consumer copies this as-is and does not edit
@@ -32,8 +34,10 @@ working *on* Gota.
 - `report.py` + `report_template.html` — a generic HTML report. The script fills three
   tokens (`__TITLE__`, `__DATA__`, `__GENERATED__`) into the template and writes a
   self-contained, format-aware viewer (file picker, sortable table, per-language
-  colors, magnitude bars, formatted units). Presentation lives in the template; the
-  script does not change when you restyle.
+  colors, magnitude bars, formatted units). Pass two or more results files (with
+  `--baseline`) to get a comparison report; `--markdown` and `--fail-on-regression`
+  turn the same comparison into a stdout delta table and a CI exit-code gate.
+  Presentation lives in the template; the script does not change when you restyle.
 - `examples/` — a complete miniature consumer (Rust, C, Go, Python) driven by a copy of
   `harness.py` and an `examples/run.py`, producing a generated `RESULTS.md`,
   `results.json`, and `report.html`. FNV-1a is the stand-in op.
