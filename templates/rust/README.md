@@ -24,3 +24,5 @@ Notes:
   crate, keeping `gota.rs` as a module (or a small internal crate).
 - Each `bench` call borrows `data` mutably for the duration of that call, which is why
   the seam is one imperative `b.bench(...)` per op rather than a returned list of ops.
+
+History: [`CHANGELOG.md`](CHANGELOG.md) tracks changes to this template; [`VERSIONS.md`](../../VERSIONS.md) lists every component's version.

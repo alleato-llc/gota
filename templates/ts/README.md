@@ -26,3 +26,5 @@ Notes:
   warmup phase), so the numbers reflect JIT steady state.
 - This measures whatever your op does in JS/TS. If you call into WASM or a native
   addon, you are measuring that, benchmarked under the same protocol.
+
+History: [`CHANGELOG.md`](CHANGELOG.md) tracks changes to this template; [`VERSIONS.md`](../../VERSIONS.md) lists every component's version.

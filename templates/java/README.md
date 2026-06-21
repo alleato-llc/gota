@@ -23,3 +23,5 @@ Notes:
 - The JVM is warmed up before measuring (the protocol's warmup phase), so the numbers
   reflect JIT-compiled steady state, not interpretation.
 - Only the JDK is used (`System.nanoTime()` for timing).
+
+History: [`CHANGELOG.md`](CHANGELOG.md) tracks changes to this template; [`VERSIONS.md`](../../VERSIONS.md) lists every component's version.

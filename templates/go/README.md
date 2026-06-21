@@ -23,3 +23,5 @@ Notes:
   rather than sharing a file with it; that is the decoupling. A `go.mod` is the
   lightest way to make that import resolve.
 - Only the standard library is used (`time` for the clock).
+
+History: [`CHANGELOG.md`](CHANGELOG.md) tracks changes to this template; [`VERSIONS.md`](../../VERSIONS.md) lists every component's version.

@@ -23,7 +23,7 @@ working *on* Gota.
   Also the comparison helpers `compare_runs` / `render_comparison_markdown` /
   `regressions` (a baseline vs one or more candidate runs, with a noise-band tolerance
   and provenance-mismatch warnings). Nothing project-specific lives here.
-- `templates/<lang>/` — two files per language plus a README:
+- `templates/<lang>/` — two source files per language, plus a README and a CHANGELOG:
   - `gota.*` is the **harness**: the peak-of-batches `bench()` loop, arg parsing,
     buffer allocation, and JSON output. A consumer copies this as-is and does not edit
     it.

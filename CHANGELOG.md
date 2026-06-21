@@ -28,7 +28,9 @@ Add the bullet under Added / Changed / Fixed / Removed **in the same commit or P
   picker, color-graded deltas, and loud machine/param mismatch warnings.
 - Per-component versioning: a `VERSIONS.md` master table (full semver per component) and
   a per-language `templates/<lang>/CHANGELOG.md`, so a change to one template or to the
-  example no longer implies the others moved.
+  example no longer implies the others moved. Each `templates/<lang>/README.md` now
+  points to its changelog and to `VERSIONS.md`, and the `CLAUDE.md` template-dir
+  inventory notes the added CHANGELOG.
 - `PROTOCOL.md`: a "core idea" section explaining *why* the loop batches (timing an op
   faster than the clock, and why batching a rate is lossless) and naming the batch-
   sizing algorithm (exponential/geometric search), with its trade-offs and sweet spot.

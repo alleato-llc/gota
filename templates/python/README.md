@@ -21,3 +21,5 @@ Notes:
   kind of thing the comparison is meant to show. If your real op delegates to a C
   extension, you are measuring that extension, not Python.
 - No third-party packages are needed.
+
+History: [`CHANGELOG.md`](CHANGELOG.md) tracks changes to this template; [`VERSIONS.md`](../../VERSIONS.md) lists every component's version.

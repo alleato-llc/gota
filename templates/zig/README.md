@@ -26,3 +26,5 @@ Notes (Zig 0.16, see the dorado port's `DEVELOPMENT.md`):
 - Timing uses `std.Io.Clock` (`std.time.Timer` is gone). The buffered stdout writer is
   flushed by the harness before exit, so output is never truncated.
 - Only the standard library is used.
+
+History: [`CHANGELOG.md`](CHANGELOG.md) tracks changes to this template; [`VERSIONS.md`](../../VERSIONS.md) lists every component's version.

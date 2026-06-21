@@ -22,3 +22,5 @@ Notes:
   template passes a small struct (`{data, n}`) as the context; widen it to carry
   whatever your op needs.
 - Only the C standard library is used (`clock_gettime(CLOCK_MONOTONIC)` for timing).
+
+History: [`CHANGELOG.md`](CHANGELOG.md) tracks changes to this template; [`VERSIONS.md`](../../VERSIONS.md) lists every component's version.
