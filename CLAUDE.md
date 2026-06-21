@@ -87,6 +87,11 @@ python3 report.py examples/results.json -o examples/report.html
 When editing `report_template.html`, confirm the embedded JS still parses and renders
 (extract the `<script>` and `node --check` it, or open the HTML).
 
+CI (`.github/workflows/ci.yml`) runs these same checks: one job per language template
+(build and run it, assert a JSON line) plus a Python core job. It is path-filtered, so a
+job runs only when its `templates/<lang>/` changed, while a change to `PROTOCOL.md` (the
+shared contract) or the workflow re-runs every template.
+
 Notes on toolchains: the Zig templates target **Zig 0.16** (args via
 `std.process.Init`, timing via `std.Io.Clock`, buffered writer flushed before exit; see
 the dorado port's `DEVELOPMENT.md` for the 0.16 API background). The TS template avoids

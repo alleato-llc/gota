@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Detect which components changed, so each job below runs only when relevant. A
+  # change to the protocol (PROTOCOL.md) or to this workflow re-runs every language
+  # template, since they must all conform to the same recipe. A pure docs/changelog
+  # change matches nothing and runs no build jobs.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      rust: ${{ steps.filter.outputs.rust }}
+      c: ${{ steps.filter.outputs.c }}
+      go: ${{ steps.filter.outputs.go }}
+      java: ${{ steps.filter.outputs.java }}
+      zig: ${{ steps.filter.outputs.zig }}
+      ts: ${{ steps.filter.outputs.ts }}
+      core: ${{ steps.filter.outputs.core }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            protocol: &protocol
+              - 'PROTOCOL.md'
+              - '.github/workflows/ci.yml'
+            python:
+              - *protocol
+              - 'templates/python/**'
+            rust:
+              - *protocol
+              - 'templates/rust/**'
+            c:
+              - *protocol
+              - 'templates/c/**'
+            go:
+              - *protocol
+              - 'templates/go/**'
+            java:
+              - *protocol
+              - 'templates/java/**'
+            zig:
+              - *protocol
+              - 'templates/zig/**'
+            ts:
+              - *protocol
+              - 'templates/ts/**'
+            core:
+              - *protocol
+              - 'harness.py'
+              - 'report.py'
+              - 'report_template.html'
+              - 'examples/**'
+
+  # Each language template must build and run standalone and emit one JSON line
+  # (the protocol output). The run uses a short warmup/measure to stay fast.
+
+  python:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 templates/python/runner.py 65536 0.1 0.2 | grep '"mbps"'
+
+  rust:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cd templates/rust && rustc -O runner.rs -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
+
+  c:
+    needs: changes
+    if: needs.changes.outputs.c == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cd templates/c && cc -std=c17 -O2 runner.c gota.c -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
+
+  go:
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - run: cd templates/go && go build -o runner . && ./runner 65536 0.1 0.2 | grep '"mbps"'
+
+  java:
+    needs: changes
+    if: needs.changes.outputs.java == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: cd templates/java && javac Gota.java Runner.java && java Runner 65536 0.1 0.2 | grep '"mbps"'
+
+  zig:
+    needs: changes
+    if: needs.changes.outputs.zig == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: "0.16.0"
+      - run: cd templates/zig && zig build-exe runner.zig -O ReleaseFast && ./runner 65536 0.1 0.2 | grep '"mbps"'
+
+  ts:
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: cd templates/ts && node --experimental-strip-types runner.ts 65536 0.1 0.2 | grep '"mbps"'
+
+  # The orchestrator and report (Python). Syntax-check the modules, confirm the
+  # report generates from the committed results.json, and run the example consumer.
+  core:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m py_compile harness.py report.py examples/run.py examples/harness.py examples/python/runner.py examples/python/gota.py
+      - run: python3 report.py examples/results.json -o /tmp/report.html && grep -q 'const EMBEDDED = {' /tmp/report.html
+      - run: python3 examples/python/runner.py 65536 0.1 0.2 | grep '"mbps"'

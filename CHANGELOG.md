@@ -19,6 +19,12 @@ Add the bullet under Added / Changed / Fixed / Removed **in the same commit or P
 
 ### Added
 
+- Continuous integration (`.github/workflows/ci.yml`): each language template builds and
+  runs standalone and must emit one JSON line, plus a core job that syntax-checks the
+  Python and confirms the report generates. It is path-filtered: a `changes` job
+  (`dorny/paths-filter`) runs each template's job only when `templates/<lang>/` changed,
+  and a change to `PROTOCOL.md` or the workflow re-runs every template (the protocol is
+  the contract they all share). A pure docs/changelog change runs no build jobs.
 - Baseline/multi-run comparison. `harness.py` gains `compare_runs`,
   `render_comparison_markdown`, and `regressions` (per-`(impl,bench)` deltas with a
   noise-band tolerance and provenance/param mismatch warnings). `report.py` accepts two
