@@ -11,9 +11,10 @@ release is cut, the `Unreleased` entries get a dated version heading below.
 
 **Rule:** route each change by what it touches — a protocol/`harness.py`/`report.py`/
 `report_template.html`/`examples/`/shared-doc change adds a bullet here; a change to a
-single `templates/<lang>/` goes in that language's changelog; a protocol change that
-ripples into the templates is recorded here once and pointed to from each language log.
-Add the bullet under Added / Changed / Fixed / Removed **in the same commit or PR**.
+single `templates/<lang>/` goes in that language's changelog; a change to the landing
+page goes in [`web/CHANGELOG.md`](web/CHANGELOG.md); a protocol change that ripples into
+the templates is recorded here once and pointed to from each language log. Add the bullet
+under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ## [Unreleased]
 

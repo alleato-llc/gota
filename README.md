@@ -250,6 +250,14 @@ your own systems (CI, a dashboard, a database, a PR comment):
   normal machine, which is right for *comparing* implementations. For reproducible
   absolutes you would pin cores, lock frequency, and use a dedicated box.
 
+## Landing page
+
+[`web/`](web/) is a small static [Astro](https://astro.build/) site that advertises
+Gota — content only, no benchmark code and no invented numbers. It is an independent
+component (its structure follows the sibling [dorado](https://github.com/nycjv321/dorado)
+project's `web/`; its theming follows the sibling `soroban` site), and is not part of the
+copy-it harness. Build it with `cd web && npm install && npm run build`.
+
 ## Changelog
 
 Gota is versioned **per component** — a change to one language template (or to the
@@ -257,10 +265,10 @@ example) doesn't move the others. [`VERSIONS.md`](VERSIONS.md) is the master tab
 every component and its semver. Cross-cutting changes (protocol, `harness.py`,
 `report.py`, `report_template.html`, `examples/`, docs) are in the core
 [`CHANGELOG.md`](CHANGELOG.md); each language template has its own
-`templates/<lang>/CHANGELOG.md`. All use [Keep a Changelog](https://keepachangelog.com/)
-format. **Rule:** any change worth noting updates the `Unreleased` section of the
-changelog for whatever it touches, in the *same commit or PR* — treat it as part of the
-change, not an afterthought.
+`templates/<lang>/CHANGELOG.md`, and the landing page has [`web/CHANGELOG.md`](web/CHANGELOG.md).
+All use [Keep a Changelog](https://keepachangelog.com/) format. **Rule:** any change worth
+noting updates the `Unreleased` section of the changelog for whatever it touches, in the
+*same commit or PR* — treat it as part of the change, not an afterthought.
 
 ## Origin
 

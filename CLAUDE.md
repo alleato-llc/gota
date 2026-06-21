@@ -41,9 +41,16 @@ working *on* Gota.
 - `examples/` — a complete miniature consumer (Rust, C, Go, Python) driven by a copy of
   `harness.py` and an `examples/run.py`, producing a generated `RESULTS.md`,
   `results.json`, and `report.html`. FNV-1a is the stand-in op.
-- `CHANGELOG.md` + `templates/<lang>/CHANGELOG.md` + `VERSIONS.md` — versioning is
-  per-component: a core changelog (protocol, harness, report, examples, docs), a
-  changelog per language template, and a master table of every component's semver.
+- `web/` — the marketing landing page that advertises Gota: a static Astro 5 + Preact
+  site, content only (no benchmark code, no invented numbers). Its structure mirrors the
+  sibling `dorado` project's `web/`; its theming mirrors the sibling `soroban` site
+  (Solarized light / Dracula dark). It is an independent component with its own
+  `web/CLAUDE.md`, `web/README.md`, and `web/CHANGELOG.md`; it does not participate in the
+  copy-it harness or the protocol.
+- `CHANGELOG.md` + `templates/<lang>/CHANGELOG.md` + `web/CHANGELOG.md` + `VERSIONS.md` —
+  versioning is per-component: a core changelog (protocol, harness, report, examples,
+  docs), a changelog per language template, a web changelog, and a master table of every
+  component's semver.
 
 ## The core invariant: keep the languages equivalent
 
@@ -87,6 +94,16 @@ python3 report.py examples/results.json -o examples/report.html
 When editing `report_template.html`, confirm the embedded JS still parses and renders
 (extract the `<script>` and `node --check` it, or open the HTML).
 
+The landing page builds standalone; after touching `web/`, confirm it still compiles:
+
+```
+( cd web && npm install && npm run build )   # static output in web/dist/
+```
+
+Preview it with `npm run dev` (or `npm run preview`), not by opening `web/dist/index.html`
+from `file://` — Astro's root-absolute CSS path 404s there and renders the page unstyled.
+The layout is responsive (one 600px breakpoint); see `web/CLAUDE.md`.
+
 CI (`.github/workflows/ci.yml`) runs these same checks: one job per language template
 (build and run it, assert a JSON line) plus a Python core job. It is path-filtered, so a
 job runs only when its `templates/<lang>/` changed, while a change to `PROTOCOL.md` (the
@@ -120,10 +137,11 @@ contract).
 - **Update the changelog as you go, routed by what you touched.** A change to the
   protocol, `harness.py`, `report.py`, `report_template.html`, `examples/`, or shared
   docs adds a bullet to the core `CHANGELOG.md`; a change to a single `templates/<lang>/`
-  goes in that language's `templates/<lang>/CHANGELOG.md`. A protocol/core change that
-  ripples into the templates is recorded once in the core log and pointed to from each
-  affected language log (don't duplicate the rationale seven times). Add the bullet
-  under Added / Changed / Fixed / Removed in the same commit or PR, and bump the
-  component's version in `VERSIONS.md` when you cut a release. `VERSIONS.md` is the
-  master table of every component and its current semver.
+  goes in that language's `templates/<lang>/CHANGELOG.md`; a change to the landing page
+  goes in `web/CHANGELOG.md`. A protocol/core change that ripples into the templates is
+  recorded once in the core log and pointed to from each affected language log (don't
+  duplicate the rationale seven times). Add the bullet under Added / Changed / Fixed /
+  Removed in the same commit or PR, and bump the component's version in `VERSIONS.md`
+  when you cut a release. `VERSIONS.md` is the master table of every component and its
+  current semver.
 - Direct prose, minimal ceremony. Educational and unaudited; MIT licensed.

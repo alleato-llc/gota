@@ -1,0 +1,362 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// Single source for the repository URL; update here once published.
+const REPO = "https://github.com/nycjv321/gota";
+const BLOB = `${REPO}/blob/main`;
+
+// The seven language templates. `files` are what you copy; `your` is the seam
+// you edit; everything else stays untouched. Kept in sync with README.md.
+const languages = [
+  {
+    name: "Python",
+    files: "gota.py · runner.py",
+    body: "The orchestrator's own language and the simplest runner. No build step; run it straight.",
+  },
+  {
+    name: "Rust",
+    files: "gota.rs · runner.rs",
+    body: "A single-file rustc build, no Cargo project. Closures plug the op straight in.",
+  },
+  {
+    name: "C",
+    files: "gota.h · gota.c · runner.c",
+    body: "The harness is a header plus one translation unit; the op is a function pointer with a void* ctx.",
+  },
+  {
+    name: "Go",
+    files: "go.mod · gota/gota.go · runner.go",
+    body: "A tiny module with the harness in its own package. go build, then run.",
+  },
+  {
+    name: "Java",
+    files: "Gota.java · Runner.java",
+    body: "The op is a functional interface; javac the two files and run Runner.",
+  },
+  {
+    name: "Zig",
+    files: "gota.zig · runner.zig",
+    body: "Targets Zig 0.16 (std.process.Init, std.Io.Clock). Built ReleaseFast.",
+  },
+  {
+    name: "TypeScript",
+    files: "gota.ts · runner.ts",
+    body: "Runs under Node's type stripping (--experimental-strip-types), no transpile step.",
+  },
+];
+
+// Languages as rows: the harness file you copy, the seam you write, and the
+// build-and-run command. Python is tinted because it also hosts the
+// orchestrator (harness.py + run.py). Commands match each template's README.
+const cmpCols = ["Harness (copy as-is)", "Your op (one seam)", "Build & run"];
+const cmpRows = [
+  { name: "Python", ref: true, cells: ["gota.py", "runner.py", "python3 runner.py 65536 0.2 0.4"] },
+  { name: "Rust", cells: ["gota.rs", "runner.rs", "rustc -O runner.rs -o runner"] },
+  { name: "C", cells: ["gota.h + gota.c", "runner.c", "cc -std=c17 -O2 runner.c gota.c -o runner"] },
+  { name: "Go", cells: ["gota/gota.go", "runner.go", "go build -o runner ."] },
+  { name: "Java", cells: ["Gota.java", "Runner.java", "javac *.java && java Runner ..."] },
+  { name: "Zig", cells: ["gota.zig", "runner.zig", "zig build-exe runner.zig -O ReleaseFast"] },
+  { name: "TypeScript", cells: ["gota.ts", "runner.ts", "node --experimental-strip-types runner.ts ..."] },
+];
+
+// Where gota sits among performance tools. The micro-benchmark row is tinted
+// because that is gota's level; the others are the traditional approaches it is
+// often confused with. Each answers a different question.
+const approachCols = ["What it measures", "The question it answers", "Example tools"];
+const approachRows = [
+  {
+    name: "Micro-benchmark",
+    ref: true,
+    cells: [
+      "One small operation, in isolation, looped",
+      "How fast is this specific code path?",
+      "gota; also criterion, JMH, Google Benchmark",
+    ],
+  },
+  {
+    name: "Macro / application",
+    cells: [
+      "A whole program under a realistic workload",
+      "How fast is the system, end to end?",
+      "wrk, JMeter, k6, load tests",
+    ],
+  },
+  {
+    name: "Profiling",
+    cells: [
+      "A real run, sampled to find hot spots",
+      "Where is the time actually spent?",
+      "perf, Instruments, flame graphs",
+    ],
+  },
+];
+---
+
+<Layout
+  title="gota — cross-language throughput micro-benchmarks"
+  description="A small, copy-it reference for honest cross-language throughput micro-benchmarks: a protocol, a generic Python orchestrator, per-language runner templates in seven languages, and a self-contained HTML report."
+>
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Educational · Polyglot · Copy, don't depend</span>
+      <h1>gota<span class="kanji">・滴</span></h1>
+      <p class="tagline">Cross-language throughput benchmarks, drop by drop.</p>
+      <p class="lead">
+        The same operation, implemented in seven languages, measured the same
+        way so the numbers actually compare. gota is a measurement protocol, a
+        generic Python orchestrator, a runner template per language, and a
+        self-contained HTML report. Copy it into your project; the protocol is
+        the product, the code is small enough to re-type.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href={REPO}>View the source</a>
+        <a class="btn ghost" href={`${BLOB}/PROTOCOL.md`}>Read the protocol</a>
+      </div>
+      <p class="fine">
+        Seven languages · one JSON line per benchmark · no fabricated numbers
+      </p>
+    </div>
+  </section>
+
+  <section id="micro">
+    <div class="wrap">
+      <h2>What a micro-benchmark is</h2>
+      <p class="sub">
+        A micro-benchmark isolates one small operation — a hash, a parse, a
+        buffer copy — and runs it in a tight loop to measure how fast that single
+        code path goes. It deliberately leaves out everything around it: no
+        network, no disk, no real workload. That isolation is the whole point. It
+        is what makes one operation's speed a clean, comparable number — here, the
+        same operation across seven languages.
+      </p>
+      <div class="cmp-scroll">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              {approachCols.map((c) => <th scope="col">{c}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {
+              approachRows.map((row) => (
+                <tr class={row.ref ? "cmp-ref" : undefined}>
+                  <th scope="row">{row.name}</th>
+                  {row.cells.map((c) => (
+                    <td>{c}</td>
+                  ))}
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="sub" style="margin-top: 1.2rem;">
+        These answer different questions and are complements, not rivals: a
+        micro-benchmark tells you which implementation of an operation is faster,
+        a macro benchmark tells you whether the whole system is fast enough, and a
+        profiler tells you where to look. gota lives in the first row.
+      </p>
+      <p class="sub" style="margin-top: 1.2rem;">
+        gota sits in that first row alongside criterion, JMH, and Google
+        Benchmark, but it is a different kind of thing. Each of those is one
+        language and a dependency you install — criterion in Rust, JMH in Java,
+        Google Benchmark in C++. gota is the opposite: one ~20-line protocol you
+        copy, not a package you depend on, spanning all seven languages so their
+        results land in the same table. The numbers compare <em>across</em>
+        languages, which a single-language harness cannot do.
+      </p>
+      <div class="note" style="margin-top: 1.5rem;">
+        <b>One more axis: throughput, not latency.</b> Even within
+        micro-benchmarking, gota measures <em>throughput</em> — the peak rate
+        (MB/s) a loop sustains, the unimpeded speed, which is what you want for
+        comparing implementations. For the <em>latency</em> distribution of a
+        single call (mean, p99, outlier rejection) reach for criterion or JMH;
+        for whole-program performance, a macro benchmark. gota answers a narrower
+        question on purpose, and the <a href="#protocol">protocol</a> below is how
+        it keeps that one answer honest and comparable.
+      </div>
+    </div>
+  </section>
+
+  <section id="layers">
+    <div class="wrap">
+      <h2>Three layers, one contract</h2>
+      <p class="sub">
+        A runner is usable on its own; the orchestrator is just the conductor
+        that runs them together; the report is a pure consumer of the JSON. You
+        can stop at any layer. Between the first two sits the protocol every
+        runner obeys.
+      </p>
+      <div class="layers">
+        <div class="layer">
+          <div>
+            <b>Measure.</b>
+            <span>
+              {" "}One native runner per language. Copy <code>gota.&lt;lang&gt;</code>
+              as-is; it runs the peak-of-batches timing loop and prints one JSON
+              line, <code>{`{"impl","bench","mbps","iters"}`}</code>, per benchmark.
+            </span>
+          </div>
+        </div>
+        <div class="layer">
+          <div>
+            <b>Orchestrate.</b>
+            <span>
+              {" "}Python, once, across every language. <code>harness.py</code>
+              builds and runs each runner under identical parameters, collects
+              their JSON, records machine/date/git provenance, and writes
+              <code>results.json</code> + a Markdown table.
+            </span>
+          </div>
+        </div>
+        <div class="layer">
+          <div>
+            <b>Report.</b>
+            <span>
+              {" "}Optional and generic over the format. <code>report.py</code>
+              turns any <code>results.json</code> into a standalone, sortable HTML
+              viewer with a file picker, formatted units, and baseline comparison.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="languages">
+    <div class="wrap">
+      <h2>Seven languages, one protocol</h2>
+      <p class="sub">
+        Two files per language: <code>gota.*</code> is the harness you copy
+        untouched; <code>runner.*</code> is your code, where one seam
+        (<code>run(impl, register)</code> then <code>bench(name, op)</code>) plugs
+        an operation into the timing loop. Each runner is independently runnable.
+      </p>
+      <div class="grid">
+        {
+          languages.map((l) => (
+            <div class="card">
+              <h3>{l.name}</h3>
+              <p>{l.body}</p>
+              <p class="card-files">{l.files}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="cmp-scroll" style="margin-top: 1.5rem;">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th scope="col">Language</th>
+              {cmpCols.map((c) => <th scope="col">{c}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {
+              cmpRows.map((row) => (
+                <tr class={row.ref ? "cmp-ref" : undefined}>
+                  <th scope="row">{row.name}</th>
+                  {row.cells.map((c) => (
+                    <td><code>{c}</code></td>
+                  ))}
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="sub" style="margin-top: 1rem;">
+        Python is tinted because it also hosts the orchestrator
+        (<code>harness.py</code> + your <code>run.py</code>). Every other row is
+        just a runner. Full build notes live in each
+        <a href={`${BLOB}/templates`}><code>templates/&lt;lang&gt;/README.md</code></a>.
+      </p>
+    </div>
+  </section>
+
+  <section id="protocol">
+    <div class="wrap">
+      <h2>The protocol is the product</h2>
+      <p class="sub">
+        Every runner obeys the same recipe, so numbers compare even though each
+        runner is native to its language. This is the same discipline a
+        multi-port project uses to keep ports in sync; here the ports are the
+        timing harnesses.
+      </p>
+      <ul class="checks">
+        <li>
+          <b>Same three CLI args</b> — buffer bytes, warmup seconds, measure
+          seconds — passed identically to every runner.
+        </li>
+        <li>
+          <b>Peak of batches.</b> Warm up the JIT, grow a batch until it runs
+          &ge; 100ms, then report the fastest batch's MB/s. The clock is read
+          only at batch boundaries, never around one tiny op.
+        </li>
+        <li>
+          <b>One JSON line per benchmark</b> on stdout
+          (<code>{`{"impl","bench","mbps","iters"}`}</code>) — the entire wire
+          format between a runner and the orchestrator.
+        </li>
+        <li>
+          <b>Kept equivalent across all seven templates.</b> Change the loop in
+          one and you change it in all of them, and in
+          <code>PROTOCOL.md</code>, or they stop being comparable.
+        </li>
+      </ul>
+      <div class="cta" style="justify-content: flex-start; margin-top: 1.5rem;">
+        <a class="btn ghost" href={`${BLOB}/PROTOCOL.md`}>Read PROTOCOL.md</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="honest">
+    <div class="wrap">
+      <h2>Honest by design</h2>
+      <p class="sub">
+        gota reports peak (unimpeded) throughput on a normal machine, which is
+        right for <em>comparing</em> implementations and optimistic for
+        real-world latency. It says so, and it never invents a number.
+      </p>
+      <div class="note">
+        <b>What the numbers mean.</b> Peak-of-batches is the unimpeded rate, not
+        a latency figure, and naive code shows language/runtime overhead, not how
+        fast tuned or SIMD code can go. Every figure comes from a real run on a
+        stated machine; <code>RESULTS.md</code>, <code>results.json</code>, and
+        <code>report.html</code> are generated, never hand-edited, and CI numbers
+        (whose hardware varies) are never committed.
+      </div>
+      <p class="sub" style="margin-top: 1.5rem;">
+        It is also deliberately not some things: not a nanosecond-latency tool
+        (use criterion or JMH for that), and not lab-grade absolute numbers (for
+        those you would pin cores and lock frequency on a dedicated box). It is a
+        comparable picture, drop by drop.
+      </p>
+    </div>
+  </section>
+
+  <section id="source">
+    <div class="wrap">
+      <h2>Copy and run</h2>
+      <p class="sub">
+        Copy <code>harness.py</code> and the <code>templates/&lt;lang&gt;</code>
+        for each language you benchmark, swap your operation into each
+        <code>runner.*</code>, write a small <code>run.py</code>, and run it. The
+        bundled example ties four languages together end to end.
+      </p>
+      <pre class="snippet mono"><code><span class="cm"># run one language's runner standalone (prints one JSON line)</span>
+python3 templates/python/runner.py 65536 0.2 0.4
+
+<span class="cm"># run the full example: build + run every runner, then tabulate</span>
+python3 examples/run.py            <span class="cm"># writes results.json + RESULTS.md</span>
+python3 report.py examples/results.json -o examples/report.html</code></pre>
+
+      <div class="cta" style="justify-content: flex-start; margin-top: 1.5rem;">
+        <a class="btn primary" href={REPO}>Browse the code</a>
+        <a class="btn ghost" href={`${BLOB}/examples`}>See the example</a>
+      </div>
+    </div>
+  </section>
+</Layout>
