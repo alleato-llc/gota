@@ -19,6 +19,7 @@ jobs:
       java: ${{ steps.filter.outputs.java }}
       zig: ${{ steps.filter.outputs.zig }}
       ts: ${{ steps.filter.outputs.ts }}
+      haskell: ${{ steps.filter.outputs.haskell }}
       core: ${{ steps.filter.outputs.core }}
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +51,9 @@ jobs:
             ts:
               - *protocol
               - 'templates/ts/**'
+            haskell:
+              - *protocol
+              - 'templates/haskell/**'
             core:
               - *protocol
               - 'harness.py'
@@ -133,6 +137,17 @@ jobs:
         with:
           node-version: "22"
       - run: cd templates/ts && node --experimental-strip-types runner.ts 65536 0.1 0.2 | grep '"mbps"'
+
+  haskell:
+    needs: changes
+    if: needs.changes.outputs.haskell == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.14.1"
+      - run: cd templates/haskell && ghc -O2 runner.hs -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   # The orchestrator and report (Python). Syntax-check the modules, confirm the
   # report generates from the committed results.json, and run the example consumer.

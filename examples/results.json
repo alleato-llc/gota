@@ -2,7 +2,7 @@
   "machine": "Apple M4 Max",
   "os": "Darwin arm64",
   "date": "2026-06-21",
-  "git_commit": "272999c",
+  "git_commit": "4f19ad5",
   "toolchains": {
     "rust": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
     "c": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
@@ -10,7 +10,8 @@
     "zig": "0.16.0",
     "java": "openjdk version \"25.0.2\" 2026-01-20",
     "python": "Python 3.14.2",
-    "ts": "v22.17.1"
+    "ts": "v22.17.1",
+    "haskell": "9.14.1"
   },
   "params": {
     "buffer_bytes": 65536,
@@ -23,51 +24,58 @@
     {
       "impl": "python",
       "bench": "fnv1a-64",
-      "mbps": 19.51,
-      "mbps_median": 19.03,
+      "mbps": 19.4,
+      "mbps_median": 19.18,
       "iters": 448
     },
     {
       "impl": "c",
       "bench": "fnv1a-64",
-      "mbps": 1102.02,
-      "mbps_median": 1087.87,
+      "mbps": 1098.73,
+      "mbps_median": 1095.99,
       "iters": 26624
     },
     {
       "impl": "go",
       "bench": "fnv1a-64",
-      "mbps": 1104.72,
-      "mbps_median": 1097.19,
+      "mbps": 1099.99,
+      "mbps_median": 1087.39,
       "iters": 26624
     },
     {
       "impl": "rust",
       "bench": "fnv1a-64",
-      "mbps": 1106.33,
-      "mbps_median": 1090.05,
-      "iters": 26624
+      "mbps": 1090.59,
+      "mbps_median": 1069.08,
+      "iters": 24576
     },
     {
       "impl": "zig",
       "bench": "fnv1a-64",
-      "mbps": 1103.61,
-      "mbps_median": 1098.14,
+      "mbps": 1097.79,
+      "mbps_median": 1089.27,
       "iters": 26624
     },
     {
       "impl": "java",
       "bench": "fnv1a-64",
-      "mbps": 1106.04,
-      "mbps_median": 1096.3,
+      "mbps": 1096.63,
+      "mbps_median": 1092.03,
       "iters": 26624
     },
     {
       "impl": "ts",
       "bench": "fnv1a-64",
-      "mbps": 86.1,
-      "mbps_median": 79.63,
+      "mbps": 85.56,
+      "mbps_median": 80.49,
       "iters": 1920
+    },
+    {
+      "impl": "haskell",
+      "bench": "fnv1a-64",
+      "mbps": 1100.19,
+      "mbps_median": 1090.64,
+      "iters": 26624
     }
   ]
 }

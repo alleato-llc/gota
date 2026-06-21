@@ -9,14 +9,15 @@ trivial serial byte reduction, so these numbers reflect each runtime's handling 
 tight scalar loop, nothing more (the TypeScript runner uses BigInt for 64-bit math,
 which is genuinely slow — an honest artifact, not a bug).
 
-Machine: Apple M4 Max | Darwin arm64 | 2026-06-21 | commit 272999c.
+Machine: Apple M4 Max | Darwin arm64 | 2026-06-21 | commit 4f19ad5.
 
 | Implementation | FNV-1a 64 |
 | --- | ---: |
-| Rust | 1106.3 |
-| C | 1102.0 |
-| Go | 1104.7 |
-| Zig | 1103.6 |
-| Java | 1106.0 |
-| Python | 19.5 |
-| TypeScript | 86.1 |
+| Rust | 1090.6 |
+| C | 1098.7 |
+| Go | 1100.0 |
+| Zig | 1097.8 |
+| Java | 1096.6 |
+| Haskell | 1100.2 |
+| Python | 19.4 |
+| TypeScript | 85.6 |

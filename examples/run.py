@@ -75,6 +75,13 @@ def prep_ts():
     return ["node", "--experimental-strip-types", "ts/runner.ts"]
 
 
+def prep_haskell():
+    if not harness.which("ghc"):
+        return None
+    _build(["ghc", "-O2", "runner.hs", "-o", "runner"], cwd="haskell")
+    return ["haskell/runner"]
+
+
 SPECS = [
     RunnerSpec("python", prep_python),
     RunnerSpec("c", prep_c),
@@ -83,6 +90,7 @@ SPECS = [
     RunnerSpec("zig", prep_zig),
     RunnerSpec("java", prep_java),
     RunnerSpec("ts", prep_ts),
+    RunnerSpec("haskell", prep_haskell),
 ]
 
 # Version probes for the toolchains this run uses, recorded into the results'
@@ -96,12 +104,13 @@ TOOLCHAINS = {
     "java": ["java", "-version"],
     "python": ["python3", "--version"],
     "ts": ["node", "--version"],
+    "haskell": ["ghc", "--numeric-version"],
 }
 
-IMPL_ORDER = ["rust", "c", "go", "zig", "java", "python", "ts"]
+IMPL_ORDER = ["rust", "c", "go", "zig", "java", "haskell", "python", "ts"]
 IMPL_LABELS = {
-    "rust": "Rust", "c": "C", "go": "Go", "zig": "Zig",
-    "java": "Java", "python": "Python", "ts": "TypeScript",
+    "rust": "Rust", "c": "C", "go": "Go", "zig": "Zig", "java": "Java",
+    "haskell": "Haskell", "python": "Python", "ts": "TypeScript",
 }
 BENCH_ORDER = ["fnv1a-64"]
 BENCH_LABELS = {"fnv1a-64": "FNV-1a 64"}
@@ -109,14 +118,15 @@ BENCH_LABELS = {"fnv1a-64": "FNV-1a 64"}
 
 def intro(meta: dict) -> str:
     return f"""\
-Example Gota run: FNV-1a over a {BUF // 1024} KiB buffer in seven languages under one
+Example Gota run: FNV-1a over a {BUF // 1024} KiB buffer in eight languages under one
 protocol. Peak MB/s (decimal, 1e6 bytes), higher is better; results.json also records
 each run's median rate (mbps_median) as a stability signal.
 
 This demonstrates the harness; it is not a serious language comparison. FNV-1a is a
 trivial serial byte reduction, so these numbers reflect each runtime's handling of a
 tight scalar loop, nothing more (the TypeScript runner uses BigInt for 64-bit math,
-which is genuinely slow — an honest artifact, not a bug).
+which is genuinely slow — an honest artifact, not a bug; the Haskell runner threads and
+forces an accumulator so laziness cannot defer or share the work).
 
 Machine: {meta['machine']} | {meta['os']} | {meta['date']} | commit {meta['git_commit']}.
 """

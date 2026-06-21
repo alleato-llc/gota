@@ -157,6 +157,7 @@ any language-specific notes.
 | Java | `templates/java/{Gota.java, Runner.java}` | [README](templates/java/README.md) |
 | Zig | `templates/zig/{gota.zig, runner.zig}` | [README](templates/zig/README.md) |
 | TypeScript | `templates/ts/{gota.ts, runner.ts}` | [README](templates/ts/README.md) |
+| Haskell | `templates/haskell/{Gota.hs, runner.hs}` | [README](templates/haskell/README.md) |
 
 For a complete worked consumer that ties several of these together, see
 [`examples/`](examples/).

@@ -24,8 +24,8 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
   and emits the median alongside the peak, so the JSON line is
   `{"impl","bench","mbps","mbps_median","iters"}`. The gap between peak and median is a
   stability signal (close = clean run; wide = noisy, peak less trusted). PROTOCOL.md and
-  all seven `templates/<lang>/gota.*` are updated in lockstep; see each template's
-  changelog for its sync.
+  every `templates/<lang>/gota.*` are updated in lockstep; see each template's changelog
+  for its sync.
 - `harness.gather_metadata(toolchains=...)` records each compiler/runtime's version under
   a `toolchains` key in the results' provenance (absent tools skipped). A throughput
   number is only reproducible alongside the toolchain that produced it. The example
@@ -36,9 +36,15 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
   map to one metric). `build_results_doc`/`write_results` take an optional `metric=`
   (default `BYTE_THROUGHPUT`, so existing callers and copied harnesses are unaffected) and
   validate it (an unknown value raises). The example declares `BYTE_THROUGHPUT`.
-- The example (`examples/`) now covers all seven languages: Zig, Java, and TypeScript
-  runners are added (FNV-1a, matching the existing four), wired into `run.py`. The
-  TypeScript runner uses BigInt for 64-bit math (slow but honest; JS has no native u64).
+- The example (`examples/`) now covers all eight languages: Zig, Java, TypeScript, and
+  Haskell runners are added (FNV-1a, matching the originals), wired into `run.py`. The
+  TypeScript runner uses BigInt for 64-bit math (slow but honest; JS has no native u64);
+  the Haskell runner threads and forces an accumulator so laziness can't defer or share
+  the work.
+- An eighth language template: **Haskell** (`templates/haskell/`, see its changelog).
+  Lazy + pure, stdlib-only (`ghc -O2`), and the most instructive addition — its
+  accumulator-threading-and-forcing seam makes the dead-code-elimination/sink hazard a
+  language requirement rather than a footgun.
 - `report_template.html` is re-skinned to match the website: the Solarized light /
   Dracula dark palette via a `data-theme` attribute, a `◐/◑` light/dark toggle, and the
   same pre-paint theme bootstrap. It shares the website's `gota-theme` localStorage key,

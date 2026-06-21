@@ -21,6 +21,7 @@ Core and is then referenced from each language template's changelog as it syncs.
 | Java template | 0.1.0 | [templates/java/CHANGELOG.md](templates/java/CHANGELOG.md) | `templates/java/` |
 | Zig template | 0.1.0 | [templates/zig/CHANGELOG.md](templates/zig/CHANGELOG.md) | `templates/zig/` |
 | TypeScript template | 0.1.0 | [templates/ts/CHANGELOG.md](templates/ts/CHANGELOG.md) | `templates/ts/` |
+| Haskell template | 0.1.0 | [templates/haskell/CHANGELOG.md](templates/haskell/CHANGELOG.md) | `templates/haskell/` |
 | Web | 0.1.0 | [web/CHANGELOG.md](web/CHANGELOG.md) | `web/` (the landing page) |
 
 All components are at `0.1.0` and unreleased (no dated release has been cut yet); their

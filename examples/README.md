@@ -1,9 +1,9 @@
 # Gota example
 
-A complete, runnable Gota consumer in miniature: seven runners (Rust, C, Go, Zig, Java,
-Python, TypeScript), one per language template, each plugged into its language's `gota`
-harness, all driven by the Python orchestrator into one table. This is what using Gota
-looks like end to end.
+A complete, runnable Gota consumer in miniature: eight runners (Rust, C, Go, Zig, Java,
+Haskell, Python, TypeScript), one per language template, each plugged into its language's
+`gota` harness, all driven by the Python orchestrator into one table. This is what using
+Gota looks like end to end.
 
 ```
 python3 run.py
@@ -56,6 +56,7 @@ examples/
   zig/{gota.zig, runner.zig}
   java/{Gota.java, Runner.java}
   ts/{gota.ts, runner.ts}
+  haskell/{Gota.hs, runner.hs}
   results.json      # generated
   RESULTS.md        # generated
   report.html       # generated — MB/s/ops-sec toggle

@@ -34,7 +34,7 @@ working *on* Gota.
   - `runner.*` (and `Runner.java`) is the **user's code**: it plugs an operation into
     the harness through one seam (`run(impl, register)` then `bench(name, op)`). The
     committed op is a trivial example to keep the template runnable.
-  - Languages: `python`, `rust`, `c`, `go`, `java`, `zig`, `ts`.
+  - Languages: `python`, `rust`, `c`, `go`, `java`, `zig`, `ts`, `haskell`.
 - `report.py` + `report_template.html` — a generic HTML report. The script fills three
   tokens (`__TITLE__`, `__DATA__`, `__GENERATED__`) into the template and writes a
   self-contained, format-aware viewer (file picker, sortable table, per-language
@@ -61,7 +61,7 @@ working *on* Gota.
 Every `templates/<lang>/gota.*` implements the **same** protocol: same three CLI args,
 same peak-of-batches loop (warm up, grow a batch to >= 100ms, then report the fastest
 batch's MB/s), same JSON line `{"impl","bench","mbps","mbps_median","iters"}`. If you change the
-protocol or the timing loop, change it in **all seven** language templates and in
+protocol or the timing loop, change it in **all eight** language templates and in
 `PROTOCOL.md`, or they stop being comparable. This is the same discipline a multi-port
 project uses to keep ports in sync; here the "ports" are the harness templates.
 
@@ -85,6 +85,7 @@ python3 templates/python/runner.py 65536 0.2 0.4
 ( cd templates/java && javac Gota.java Runner.java && java Runner 65536 0.2 0.4 && rm *.class )
 ( cd templates/zig  && zig build-exe runner.zig -O ReleaseFast && ./runner 65536 0.2 0.4 && rm runner runner.zig.o )
 node --experimental-strip-types templates/ts/runner.ts 65536 0.2 0.4   # or: npx tsx
+( cd templates/haskell && ghc -O2 runner.hs -o runner && ./runner 65536 0.2 0.4 && rm -f runner *.hi *.o )
 ```
 
 Each must print one JSON line (now `{"impl","bench","mbps","mbps_median","iters"}`). For
@@ -148,7 +149,7 @@ contract).
   goes in that language's `templates/<lang>/CHANGELOG.md`; a change to the landing page
   goes in `web/CHANGELOG.md`. A protocol/core change that ripples into the templates is
   recorded once in the core log and pointed to from each affected language log (don't
-  duplicate the rationale seven times). Add the bullet under Added / Changed / Fixed /
+  duplicate the rationale eight times). Add the bullet under Added / Changed / Fixed /
   Removed in the same commit or PR, and bump the component's version in `VERSIONS.md`
   when you cut a release. `VERSIONS.md` is the master table of every component and its
   current semver.

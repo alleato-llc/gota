@@ -1,6 +1,7 @@
 # Build artifacts from runners (the harness builds these on demand)
 runner
 *.o
+*.hi
 *.class
 __pycache__/
 
