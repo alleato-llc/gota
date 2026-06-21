@@ -8,12 +8,12 @@ rule in [CLAUDE.md](CLAUDE.md) and the summary in [`README.md`](README.md#change
 
 The **Core** row covers the cross-cutting pieces — the protocol, the orchestrator
 (`harness.py`), and the report (`report.py` + `report_template.html`) plus the
-`examples/` consumer and shared docs. A protocol-level change bumps Core and is then
-referenced from each language template's changelog as it syncs.
+`examples/` consumer, the `tests/` suite, and shared docs. A protocol-level change bumps
+Core and is then referenced from each language template's changelog as it syncs.
 
 | Component | Version | Changelog | Covers |
 | --- | --- | --- | --- |
-| Core | 0.1.0 | [CHANGELOG.md](CHANGELOG.md) | `PROTOCOL.md`, `harness.py`, `report.py`, `report_template.html`, `examples/`, shared docs |
+| Core | 0.1.0 | [CHANGELOG.md](CHANGELOG.md) | `PROTOCOL.md`, `harness.py`, `report.py`, `report_template.html`, `examples/`, `tests/`, shared docs |
 | Python template | 0.1.0 | [templates/python/CHANGELOG.md](templates/python/CHANGELOG.md) | `templates/python/` |
 | Rust template | 0.1.0 | [templates/rust/CHANGELOG.md](templates/rust/CHANGELOG.md) | `templates/rust/` |
 | C template | 0.1.0 | [templates/c/CHANGELOG.md](templates/c/CHANGELOG.md) | `templates/c/` |

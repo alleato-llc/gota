@@ -1,8 +1,9 @@
 # Gota example
 
-A complete, runnable Gota consumer in miniature: four runners (Rust, C, Go, Python),
-each plugged into its language's `gota` harness, all driven by the Python orchestrator
-into one table. This is what using Gota looks like end to end.
+A complete, runnable Gota consumer in miniature: seven runners (Rust, C, Go, Zig, Java,
+Python, TypeScript), one per language template, each plugged into its language's `gota`
+harness, all driven by the Python orchestrator into one table. This is what using Gota
+looks like end to end.
 
 ```
 python3 run.py
@@ -31,11 +32,13 @@ picker, so it can also open any other `results.json` you load into it.
 
 FNV-1a over the buffer, in each language, as a stand-in for "your operation." FNV-1a
 is a deliberately dull choice: a serial byte reduction with a carried dependency, so
-no compiler can vectorize it away, and the three compiled languages land close
-together while Python pays the interpreter tax. That is the *point* of the example: it
-shows the harness producing an honest, comparable number, not a language race. Each
-op ends with a one-byte sink (`data[0] ^= h`) so the loop cannot be optimized out
-under `-O`.
+no compiler can vectorize it away, and the compiled languages (Rust, C, Go, Zig) plus
+the warmed-up JVM land close together while Python pays the interpreter tax and the
+TypeScript runner pays for BigInt 64-bit math (JS has no native u64). That is the
+*point* of the example: it shows the harness producing an honest, comparable number,
+not a language race. Each op ends with a one-byte sink (`data[0] ^= h`) so the loop
+cannot be optimized out under `-O`. Each result also carries `mbps_median` (the median
+of the per-batch rates) alongside the peak; the two being close means a clean run.
 
 ## Layout (mirrors a real consumer)
 
@@ -47,6 +50,9 @@ examples/
   c/{gota.h, gota.c, runner.c}
   go/{go.mod, gota/gota.go, runner.go}
   rust/{gota.rs, runner.rs}
+  zig/{gota.zig, runner.zig}
+  java/{Gota.java, Runner.java}
+  ts/{gota.ts, runner.ts}
   results.json      # generated
   RESULTS.md        # generated
 ```

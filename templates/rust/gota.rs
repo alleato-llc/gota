@@ -37,6 +37,7 @@ impl Bencher {
         }
         let mut best = 0.0f64;
         let mut total: u64 = 0;
+        let mut samples: Vec<f64> = Vec::new(); // per-batch MB/s; median vs peak shows stability
         let start = Instant::now();
         while start.elapsed() < self.measure {
             let s = Instant::now();
@@ -47,11 +48,21 @@ impl Bencher {
             if mbps > best {
                 best = mbps;
             }
+            samples.push(mbps);
             total += batch;
         }
+        samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let n = samples.len();
+        let median = if n == 0 {
+            0.0
+        } else if n % 2 == 1 {
+            samples[n / 2]
+        } else {
+            (samples[n / 2 - 1] + samples[n / 2]) / 2.0
+        };
         println!(
-            "{{\"impl\":\"{}\",\"bench\":\"{}\",\"mbps\":{:.2},\"iters\":{}}}",
-            self.impl_name, name, best, total
+            "{{\"impl\":\"{}\",\"bench\":\"{}\",\"mbps\":{:.2},\"mbps_median\":{:.2},\"iters\":{}}}",
+            self.impl_name, name, best, median, total
         );
     }
 }

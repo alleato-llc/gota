@@ -15,6 +15,10 @@ func main() {
 	gota.Run(impl, func(b *gota.Bencher, data []byte) {
 		// Replace with your real operation(s). Each op closes over `data` and runs
 		// the work to measure. Call b.Bench once per operation you want in the table.
+		//
+		// This example writes `data` in place, which is always observed. If your op
+		// instead computes a value, consume it (e.g. `data[0] ^= byte(result)`) or the
+		// compiler may delete the work and you measure nothing.
 		b.Bench("example", func() {
 			for i := range data {
 				data[i] ^= 0x5A

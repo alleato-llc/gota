@@ -37,6 +37,7 @@ class Bencher:
             batch *= 2
         best = 0.0
         total = 0
+        samples: list[float] = []  # per-batch MB/s; median vs peak shows run stability
         t0 = time.perf_counter()
         while time.perf_counter() - t0 < self.measure:
             start = time.perf_counter()
@@ -45,8 +46,15 @@ class Bencher:
             mbps = self.buf_bytes * batch / 1e6 / (time.perf_counter() - start)
             if mbps > best:
                 best = mbps
+            samples.append(mbps)
             total += batch
-        print(f'{{"impl":"{self.impl}","bench":"{name}","mbps":{best:.2f},"iters":{total}}}', flush=True)
+        samples.sort()
+        n = len(samples)
+        median = 0.0 if n == 0 else samples[n // 2] if n % 2 else (samples[n // 2 - 1] + samples[n // 2]) / 2
+        print(
+            f'{{"impl":"{self.impl}","bench":"{name}","mbps":{best:.2f},"mbps_median":{median:.2f},"iters":{total}}}',
+            flush=True,
+        )
 
 
 def run(impl: str, register: Callable[["Bencher", bytearray], None]) -> None:

@@ -8,6 +8,16 @@ version of every component is in [VERSIONS.md](../../VERSIONS.md).
 
 ## [Unreleased]
 
+### Changed
+
+- Synced to the protocol's `mbps_median` addition (see the [core changelog](../../CHANGELOG.md)): `gota.rs` now records each measure-phase
+  batch's rate and emits the median beside the peak in its JSON line.
+
+### Added
+
+- `runner.rs`: a comment that a value-returning op must consume its result, or an
+  optimizing build may delete the work and you measure nothing.
+
 ## [0.1.0]
 
 ### Added

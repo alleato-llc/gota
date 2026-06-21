@@ -8,6 +8,7 @@ package gota
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -39,6 +40,7 @@ func (b *Bencher) Bench(name string, op func()) {
 	}
 	best := 0.0
 	var total uint64
+	var samples []float64 // per-batch MB/s; median vs peak shows run stability
 	t0 := time.Now()
 	for time.Since(t0) < b.Measure {
 		start = time.Now()
@@ -49,9 +51,19 @@ func (b *Bencher) Bench(name string, op func()) {
 		if mbps > best {
 			best = mbps
 		}
+		samples = append(samples, mbps)
 		total += batch
 	}
-	fmt.Printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"iters\":%d}\n", b.Impl, name, best, total)
+	sort.Float64s(samples)
+	median := 0.0
+	if n := len(samples); n > 0 {
+		if n%2 == 1 {
+			median = samples[n/2]
+		} else {
+			median = (samples[n/2-1] + samples[n/2]) / 2
+		}
+	}
+	fmt.Printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%d}\n", b.Impl, name, best, median, total)
 }
 
 // Run parses argv (buffer_bytes, warmup_s, measure_s), allocates a buffer, and calls

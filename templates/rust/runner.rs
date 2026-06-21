@@ -16,6 +16,11 @@ fn main() {
     gota::run(IMPL, |b, data| {
         // Replace with your real operation(s). Each op closes over `data` and runs
         // the work to measure. Call b.bench once per operation you want in the table.
+        //
+        // This example writes `data` in place, which is always observed. If your op
+        // instead computes a value, consume it (e.g. `data[0] ^= result as u8`, or
+        // `std::hint::black_box(result)`) or `rustc -O` may delete the work and you
+        // measure nothing.
         b.bench("example", || {
             for x in data.iter_mut() {
                 *x ^= 0x5A;

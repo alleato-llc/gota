@@ -15,6 +15,10 @@ const IMPL = "example"; // your implementation's name
 run(IMPL, (b: Bencher, data: Uint8Array) => {
   // Replace with your real operation(s). Each op closes over `data` and runs the
   // work to measure. Call b.bench once per operation you want in the table.
+  //
+  // This example writes `data` in place, which is always observed. If your op instead
+  // computes a value, consume it (write a byte back into `data`) so the JIT can't elide
+  // the work and you measure nothing.
   b.bench("example", () => {
     for (let i = 0; i < data.length; i++) data[i] ^= 0x5a;
   });

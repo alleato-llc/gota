@@ -56,6 +56,7 @@ jobs:
               - 'report.py'
               - 'report_template.html'
               - 'examples/**'
+              - 'tests/**'
 
   # Each language template must build and run standalone and emit one JSON line
   # (the protocol output). The run uses a short warmup/measure to stay fast.
@@ -145,5 +146,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 -m py_compile harness.py report.py examples/run.py examples/harness.py examples/python/runner.py examples/python/gota.py
+      - run: python3 -m unittest discover -s tests
       - run: python3 report.py examples/results.json -o /tmp/report.html && grep -q 'const EMBEDDED = {' /tmp/report.html
       - run: python3 examples/python/runner.py 65536 0.1 0.2 | grep '"mbps"'

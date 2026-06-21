@@ -12,11 +12,14 @@ Each runner is invoked with three arguments and prints one JSON line per benchma
 ```
 runner <buffer_bytes> <warmup_seconds> <measure_seconds>
 
-{"impl":"<name>","bench":"<name>","mbps":<float>,"iters":<int>}
+{"impl":"<name>","bench":"<name>","mbps":<float>,"mbps_median":<float>,"iters":<int>}
 ```
 
 `impl` identifies the implementation (e.g. `rust`); `bench` the operation (e.g.
-`blake3`); `mbps` is decimal MB/s (1e6 bytes); `iters` the total iterations run.
+`blake3`); `mbps` is the peak (decimal MB/s, 1e6 bytes); `mbps_median` is the median
+of the per-batch rates in the measure phase; `iters` the total iterations run. The
+gap between `mbps` and `mbps_median` is a stability signal: close together means a
+clean run, a wide gap means the measure phase was noisy and the peak is less trusted.
 
 ## The measurement (`bench()`)
 
@@ -26,8 +29,9 @@ For each benchmark the runner:
 2. **warms up**: runs the operation in a loop until `warmup_seconds` elapse, so
    JIT/VM runtimes reach steady state (otherwise they are measured mid-compilation),
 3. **sizes a batch**: grows an iteration count until one batch takes at least ~100ms,
-4. **measures**: runs that batch repeatedly for `measure_seconds`, and reports the
-   **peak** `MB/s = buffer_bytes * batch / 1e6 / batch_seconds`.
+4. **measures**: runs that batch repeatedly for `measure_seconds`, recording each
+   batch's `MB/s = buffer_bytes * batch / 1e6 / batch_seconds`, and reports the
+   **peak** of those rates (plus their **median** as a stability signal).
 
 ## The core idea: batch up an op too fast to time
 

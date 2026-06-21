@@ -32,7 +32,7 @@ data flow; what you copy versus what you write is marked.
 ```
    ┌─ PROTOCOL.md ─ the contract every runner and the orchestrator agree on ─┐
    │   in  (argv):   <buffer_bytes> <warmup_s> <measure_s>                    │
-   │   out (stdout): {"impl","bench","mbps","iters"}   one line per benchmark │
+   │   out (stdout): {"impl","bench","mbps","mbps_median","iters"}  per bench │
    └─────────────────────────────────────────────────────────────────────────┘
 
    1. MEASURE — native code, one runner per language
@@ -122,9 +122,11 @@ def intro(meta): return f"... {meta['machine']} {meta['date']} ..."
 # 4. Wire it together: run everything, then write the outputs.
 def main():
     rows = harness.run_all(SPECS, buf=65536, warmup=0.5, measure=1.5)
-    meta = harness.gather_metadata()
+    # toolchains={...} records each compiler/runtime version in the provenance.
+    meta = harness.gather_metadata(toolchains={"rust": ["rustc", "--version"], ...})
     harness.write_results(rows, "results.json", "RESULTS.md",
         params={...}, meta=meta, units="MB/s, peak of batches",
+        metric=harness.Metric.BYTE_THROUGHPUT,  # the kind measured; OP_THROUGHPUT for TPS
         impl_order=IMPL_ORDER, impl_labels=IMPL_LABELS,
         bench_order=BENCH_ORDER, bench_labels=BENCH_LABELS, intro=intro(meta))
 ```
@@ -209,10 +211,15 @@ Nothing here is a closed pipeline; pick the layer that fits and route the rest i
 your own systems (CI, a dashboard, a database, a PR comment):
 
 - **Just the numbers.** `harness.run_all(specs, buf, warmup, measure)` returns a plain
-  `list[dict]` (`{"impl","bench","mbps","iters"}`). Do whatever you want with it;
-  ignore the rest of the harness.
-- **The JSON document.** `harness.build_results_doc(rows, params=, meta=, units=)`
-  returns the `results.json` dict (rows + provenance). Serialize it where you like.
+  `list[dict]` (`{"impl","bench","mbps","mbps_median","iters"}` — `mbps` is the peak,
+  `mbps_median` the median of the per-batch rates as a stability signal). It takes an
+  optional `timeout=` per runner. Do whatever you want with it; ignore the rest.
+- **The JSON document.** `harness.build_results_doc(rows, params=, meta=, units=, metric=)`
+  returns the `results.json` dict (rows + provenance). `metric` is a `harness.Metric`
+  (`BYTE_THROUGHPUT` / `OP_THROUGHPUT` / `LATENCY`) recording the *kind* of quantity, kept
+  distinct from the free-text `units` label so the report can headline the right number
+  and a comparison can refuse to pit different kinds against each other. Serialize it
+  where you like.
 - **The Markdown string.** `harness.render_markdown(rows, intro=, impl_order=, ...)`
   returns the table as a string, for a PR comment or a docs page.
 - **Stream the outputs.** `harness.write_results(...)` accepts a path *or any open

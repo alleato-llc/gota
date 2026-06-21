@@ -12,6 +12,11 @@ static double now_s(void) {
     return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
 }
 
+static int cmp_double(const void *a, const void *b) {
+    double x = *(const double *)a, y = *(const double *)b;
+    return (x > y) - (x < y);
+}
+
 /* Report peak throughput across many batches (the max MB/s is the reproducible rate;
  * jitter only ever slows a batch). The clock is read only at batch boundaries. */
 void gota_bench(const gota_bencher *b, const char *name, void (*op)(void *), void *ctx) {
@@ -32,6 +37,11 @@ void gota_bench(const gota_bencher *b, const char *name, void (*op)(void *), voi
     }
     double best = 0.0;
     unsigned long long total = 0;
+    /* Per-batch MB/s samples; median vs peak shows run stability. Each measure-phase
+     * batch clears ~100ms, so the count is bounded by measure/0.1; size generously. */
+    size_t cap = (size_t)(b->measure / 0.05) + 64;
+    double *samples = malloc(cap * sizeof(double));
+    size_t nsamp = 0;
     double t0 = now_s();
     while (now_s() - t0 < b->measure) {
         start = now_s();
@@ -42,9 +52,18 @@ void gota_bench(const gota_bencher *b, const char *name, void (*op)(void *), voi
         if (mbps > best) {
             best = mbps;
         }
+        if (samples && nsamp < cap) {
+            samples[nsamp++] = mbps;
+        }
         total += batch;
     }
-    printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"iters\":%llu}\n", b->impl, name, best, total);
+    double median = 0.0;
+    if (samples && nsamp > 0) {
+        qsort(samples, nsamp, sizeof(double), cmp_double);
+        median = nsamp % 2 ? samples[nsamp / 2] : (samples[nsamp / 2 - 1] + samples[nsamp / 2]) / 2;
+    }
+    free(samples);
+    printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%llu}\n", b->impl, name, best, median, total);
 }
 
 int gota_run(const char *impl, int argc, char **argv,

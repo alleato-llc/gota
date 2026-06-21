@@ -18,6 +18,10 @@ IMPL = "example"  # your implementation's name
 def register(b: gota.Bencher, data: bytearray) -> None:
     # Replace with your real operation(s). Each op closes over `data` and runs the
     # work to measure. Call b.bench once per operation you want in the table.
+    #
+    # This example writes `data` in place, which is always observed. If your op instead
+    # computes a value, consume it (write a byte back into `data`) so a port to an
+    # optimizing language can't delete the work — harmless in CPython, essential once ported.
     def example():
         for i in range(len(data)):
             data[i] ^= 0x5A

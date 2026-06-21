@@ -55,27 +55,68 @@ def prep_rust():
     return ["rust/runner"]
 
 
+def prep_zig():
+    if not harness.which("zig"):
+        return None
+    _build(["zig", "build-exe", "runner.zig", "-O", "ReleaseFast"], cwd="zig")
+    return ["zig/runner"]
+
+
+def prep_java():
+    if not (harness.which("javac") and harness.which("java")):
+        return None
+    _build(["javac", "Gota.java", "Runner.java"], cwd="java")
+    return ["java", "-cp", "java", "Runner"]
+
+
+def prep_ts():
+    if not harness.which("node"):
+        return None
+    return ["node", "--experimental-strip-types", "ts/runner.ts"]
+
+
 SPECS = [
     RunnerSpec("python", prep_python),
     RunnerSpec("c", prep_c),
     RunnerSpec("go", prep_go),
     RunnerSpec("rust", prep_rust),
+    RunnerSpec("zig", prep_zig),
+    RunnerSpec("java", prep_java),
+    RunnerSpec("ts", prep_ts),
 ]
 
-IMPL_ORDER = ["rust", "c", "go", "python"]
-IMPL_LABELS = {"rust": "Rust", "c": "C", "go": "Go", "python": "Python"}
+# Version probes for the toolchains this run uses, recorded into the results'
+# provenance (absent tools are skipped). A number is only reproducible with the
+# compiler that produced it.
+TOOLCHAINS = {
+    "rust": ["rustc", "--version"],
+    "c": ["cc", "--version"],
+    "go": ["go", "version"],
+    "zig": ["zig", "version"],
+    "java": ["java", "-version"],
+    "python": ["python3", "--version"],
+    "ts": ["node", "--version"],
+}
+
+IMPL_ORDER = ["rust", "c", "go", "zig", "java", "python", "ts"]
+IMPL_LABELS = {
+    "rust": "Rust", "c": "C", "go": "Go", "zig": "Zig",
+    "java": "Java", "python": "Python", "ts": "TypeScript",
+}
 BENCH_ORDER = ["fnv1a-64"]
 BENCH_LABELS = {"fnv1a-64": "FNV-1a 64"}
 
 
 def intro(meta: dict) -> str:
     return f"""\
-Example Gota run: FNV-1a over a {BUF // 1024} KiB buffer in four languages under one
-protocol. Peak MB/s (decimal, 1e6 bytes), higher is better.
+Example Gota run: FNV-1a over a {BUF // 1024} KiB buffer in seven languages under one
+protocol. Peak MB/s (decimal, 1e6 bytes), higher is better; results.json also records
+each run's median rate (mbps_median) as a stability signal.
 
 This demonstrates the harness; it is not a serious language comparison. FNV-1a is a
-trivial serial byte reduction, so these numbers reflect each compiler's handling of a
-tight scalar loop, nothing more.
+trivial serial byte reduction, so these numbers reflect each runtime's handling of a
+tight scalar loop, nothing more (the TypeScript runner uses BigInt for 64-bit math,
+which is genuinely slow — an honest artifact, not a bug).
 
 Machine: {meta['machine']} | {meta['os']} | {meta['date']} | commit {meta['git_commit']}.
 """
@@ -84,13 +125,14 @@ Machine: {meta['machine']} | {meta['os']} | {meta['date']} | commit {meta['git_c
 def main() -> None:
     harness.log(f"params: buf={BUF} warmup={WARMUP} measure={MEASURE}")
     rows = harness.run_all(SPECS, BUF, WARMUP, MEASURE)
-    meta = harness.gather_metadata()
+    meta = harness.gather_metadata(toolchains=TOOLCHAINS)
     harness.write_results(
         rows,
         "results.json",
         "RESULTS.md",
         params={"buffer_bytes": BUF, "warmup_s": WARMUP, "measure_s": MEASURE},
         meta=meta,
+        metric=harness.Metric.BYTE_THROUGHPUT,
         units="MB/s (decimal, 1e6 bytes), peak of batches",
         impl_order=IMPL_ORDER,
         impl_labels=IMPL_LABELS,

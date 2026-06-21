@@ -18,7 +18,10 @@ typedef struct {
     size_t n;
 } ctx_t;
 
-/* Replace with your real operation. It receives the context you passed to gota_bench. */
+/* Replace with your real operation. It receives the context you passed to gota_bench.
+ * This example writes the buffer in place, which is always observed. If your op instead
+ * computes a value, consume it (e.g. `c->data[0] ^= (unsigned char)result`) or -O2 may
+ * delete the work and you measure nothing. */
 static void example_op(void *vctx) {
     ctx_t *c = (ctx_t *)vctx;
     for (size_t i = 0; i < c->n; i++) {

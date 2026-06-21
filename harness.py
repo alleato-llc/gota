@@ -13,12 +13,28 @@ and calls `run_all` + `write_results`. See README.md and PROTOCOL.md.
 from __future__ import annotations
 
 import dataclasses
+import enum
 import json
 import platform
 import shutil
 import subprocess
 import sys
 from typing import Callable, Optional
+
+
+class Metric(str, enum.Enum):
+    """The kind of quantity a run measures. It drives the report headline and whether two
+    runs are comparable (you cannot compare a TPS run to an MB/s run). The display unit
+    (e.g. "MB/s", "requests/sec") is a separate free-text `units` label, and many labels
+    map to one Metric: "rows/sec" and "requests/sec" are both OP_THROUGHPUT.
+
+    Selecting a Metric is the user's intent; which measurement *engine* runs (batched for
+    ops faster than the clock, per-call for slower IO) is decided by the harness from the
+    op's speed, not chosen here."""
+
+    BYTE_THROUGHPUT = "byte_throughput"  # bytes moved per second; headline MB/s
+    OP_THROUGHPUT = "op_throughput"      # operations per second (TPS); headline ops/sec
+    LATENCY = "latency"                  # per-call time distribution; headline p50/p99/max
 
 
 def which(cmd: str) -> bool:
@@ -43,10 +59,21 @@ class RunnerSpec:
     prepare: Callable[[], Optional[list[str]]]
 
 
-def run_all(specs: list[RunnerSpec], buf: int, warmup: float, measure: float) -> list[dict]:
+def run_all(
+    specs: list[RunnerSpec],
+    buf: int,
+    warmup: float,
+    measure: float,
+    *,
+    timeout: float = 120.0,
+) -> list[dict]:
     """Build and run each available runner with identical parameters; collect the
     JSON-line results. Each runner's stdout is captured separately, so there is no
-    shared-output ordering or interleaving."""
+    shared-output ordering or interleaving.
+
+    `timeout` bounds each runner (seconds): a runner that hangs is killed and skipped
+    rather than stalling the whole run. A malformed JSON line is logged and skipped, so
+    one bad line never aborts the collection."""
     rows: list[dict] = []
     for spec in specs:
         try:
@@ -58,23 +85,50 @@ def run_all(specs: list[RunnerSpec], buf: int, warmup: float, measure: float) ->
             log(f"  {spec.name}: unavailable, skipping")
             continue
         log(f"  {spec.name}: running")
-        proc = subprocess.run(
-            [*argv, str(buf), str(warmup), str(measure)],
-            capture_output=True,
-            text=True,
-        )
+        try:
+            proc = subprocess.run(
+                [*argv, str(buf), str(warmup), str(measure)],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            log(f"  {spec.name}: timed out after {timeout:g}s, skipping")
+            continue
         if proc.returncode != 0:
             log(f"  {spec.name}: runner exited {proc.returncode}; stderr:\n{proc.stderr.strip()}")
             continue
         for line in proc.stdout.splitlines():
             line = line.strip()
             if line.startswith("{"):
-                rows.append(json.loads(line))
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError as e:
+                    log(f"  {spec.name}: skipped malformed JSON line ({e}): {line[:120]}")
     return rows
 
 
-def gather_metadata() -> dict:
-    """Machine, OS, date, and git commit, for provenance in the results."""
+def _first_line(argv: list[str]) -> Optional[str]:
+    """Run a `--version`-style probe and return its first non-empty output line, or None
+    if the tool is absent or errors. stderr is folded in because some toolchains (javac,
+    older gcc) print their version there."""
+    try:
+        out = subprocess.run(argv, capture_output=True, text=True, timeout=10)
+    except Exception:
+        return None
+    for line in ((out.stdout or "") + (out.stderr or "")).splitlines():
+        if line.strip():
+            return line.strip()
+    return None
+
+
+def gather_metadata(*, toolchains: Optional[dict[str, list[str]]] = None) -> dict:
+    """Machine, OS, date, and git commit, for provenance in the results.
+
+    Pass `toolchains` as {label: version_argv} (e.g. {"rust": ["rustc", "--version"]})
+    to also record each compiler/runtime's version under a `toolchains` key; absent or
+    failing tools are skipped. A throughput number is only reproducible alongside the
+    toolchain that produced it, so recording versions is part of honest provenance."""
     machine = "unknown"
     try:
         if platform.system() == "Darwin":
@@ -96,19 +150,36 @@ def gather_metadata() -> dict:
         ).strip()
     except Exception:
         pass
-    return {
+    meta = {
         "machine": machine,
         "os": f"{platform.system()} {platform.machine()}",
         "date": subprocess.check_output(["date", "+%Y-%m-%d"], text=True).strip(),
         "git_commit": commit,
     }
+    if toolchains:
+        versions = {label: v for label, argv in toolchains.items() if (v := _first_line(argv))}
+        if versions:
+            meta["toolchains"] = versions
+    return meta
 
 
-def build_results_doc(rows: list[dict], *, params: dict, meta: dict, units: str) -> dict:
+def build_results_doc(
+    rows: list[dict],
+    *,
+    params: dict,
+    meta: dict,
+    units: str,
+    metric: "Metric | str" = Metric.BYTE_THROUGHPUT,
+) -> dict:
     """The results.json document: provenance + params + the raw measurement rows.
     This is the canonical, tooling-friendly shape; feed it to your own pipeline (a
-    dashboard, a database, the HTML viewer) instead of the Markdown if you prefer."""
-    return {**meta, "params": params, "units": units, "results": rows}
+    dashboard, a database, the HTML viewer) instead of the Markdown if you prefer.
+
+    `metric` is the kind of quantity measured (a `Metric`, or its string value); it is
+    recorded so the report can headline the right number and a comparison can refuse to
+    pit different kinds against each other. An unknown value raises. `units` stays the
+    free-text display label (e.g. "MB/s", "requests/sec")."""
+    return {**meta, "params": params, "metric": Metric(metric).value, "units": units, "results": rows}
 
 
 def render_markdown(
@@ -159,6 +230,7 @@ def write_results(
     params: dict,
     meta: dict,
     units: str,
+    metric: "Metric | str" = Metric.BYTE_THROUGHPUT,
     impl_order: list[str],
     impl_labels: dict[str, str],
     bench_order: list[str],
@@ -168,10 +240,11 @@ def write_results(
     """Convenience: write results.json (raw + provenance) and a Markdown table.
 
     `out_json` and `out_md` may each be a path or an open writable stream, so the
-    output can go to files or straight into your own tooling. To integrate more
-    deeply, skip this and use `build_results_doc` / `render_markdown` directly, or just
-    consume the list of row dicts that `run_all` returns."""
-    json_name = _write(out_json, json.dumps(build_results_doc(rows, params=params, meta=meta, units=units), indent=2) + "\n")
+    output can go to files or straight into your own tooling. `metric` (a `Metric`)
+    records what kind of quantity was measured; `units` is its free-text display label.
+    To integrate more deeply, skip this and use `build_results_doc` / `render_markdown`
+    directly, or just consume the list of row dicts that `run_all` returns."""
+    json_name = _write(out_json, json.dumps(build_results_doc(rows, params=params, meta=meta, units=units, metric=metric), indent=2) + "\n")
     md_name = _write(
         out_md,
         render_markdown(
@@ -224,8 +297,13 @@ def _provenance_warnings(baseline: dict, cand: dict) -> list[str]:
     for k in sorted(set(bp) | set(cp)):
         if bp.get(k) != cp.get(k):
             warnings.append(f"param {k} differs ({bp.get(k)} vs {cp.get(k)}) — runs measure different work")
-    if baseline.get("units") and cand.get("units") and baseline["units"] != cand["units"]:
-        warnings.append(f"units differ ({baseline['units']} vs {cand['units']})")
+    # Comparability keys on the metric *kind*, not the free-text label: two OP_THROUGHPUT
+    # runs labelled "requests/sec" and "rows/sec" are comparable, but a TPS run and an
+    # MB/s run are not. Pre-metric results (no field) are assumed BYTE_THROUGHPUT.
+    bm = baseline.get("metric", Metric.BYTE_THROUGHPUT.value)
+    cm = cand.get("metric", Metric.BYTE_THROUGHPUT.value)
+    if bm != cm:
+        warnings.append(f"metric kind differs ({bm} vs {cm}) — runs measure different things, not comparable")
     return warnings
 
 

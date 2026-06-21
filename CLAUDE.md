@@ -17,12 +17,16 @@ working *on* Gota.
   (peak-of-batches, read the clock at batch boundaries, warm up JITs, what is in and
   out of scope). This is the real product; the code is almost incidental.
 - `harness.py` — the generic orchestrator. `RunnerSpec` + `run_all` (build and run each
-  runner as a subprocess under identical params, collect their JSON), `gather_metadata`
-  (machine/os/date/git provenance), and the output helpers `build_results_doc`,
+  runner as a subprocess under identical params with a per-runner `timeout`, collect their
+  JSON, skipping a malformed line rather than aborting), `gather_metadata`
+  (machine/os/date/git provenance, plus `toolchains=` compiler/runtime versions), the
+  `Metric` enum (`BYTE_THROUGHPUT` / `OP_THROUGHPUT` / `LATENCY` — the kind measured, kept
+  distinct from the free-text `units` label), and the output helpers `build_results_doc`,
   `render_markdown`, and `write_results` (which accepts a path or any writable stream).
   Also the comparison helpers `compare_runs` / `render_comparison_markdown` /
-  `regressions` (a baseline vs one or more candidate runs, with a noise-band tolerance
-  and provenance-mismatch warnings). Nothing project-specific lives here.
+  `regressions` (a baseline vs one or more candidate runs, with a noise-band tolerance and
+  provenance-mismatch warnings — comparability keys on the `metric` kind). Nothing
+  project-specific lives here. Unit-tested in `tests/test_harness.py`.
 - `templates/<lang>/` — two source files per language, plus a README and a CHANGELOG:
   - `gota.*` is the **harness**: the peak-of-batches `bench()` loop, arg parsing,
     buffer allocation, and JSON output. A consumer copies this as-is and does not edit
@@ -56,7 +60,7 @@ working *on* Gota.
 
 Every `templates/<lang>/gota.*` implements the **same** protocol: same three CLI args,
 same peak-of-batches loop (warm up, grow a batch to >= 100ms, then report the fastest
-batch's MB/s), same JSON line `{"impl","bench","mbps","iters"}`. If you change the
+batch's MB/s), same JSON line `{"impl","bench","mbps","mbps_median","iters"}`. If you change the
 protocol or the timing loop, change it in **all seven** language templates and in
 `PROTOCOL.md`, or they stop being comparable. This is the same discipline a multi-port
 project uses to keep ports in sync; here the "ports" are the harness templates.
@@ -83,10 +87,12 @@ python3 templates/python/runner.py 65536 0.2 0.4
 node --experimental-strip-types templates/ts/runner.ts 65536 0.2 0.4   # or: npx tsx
 ```
 
-Each must print one JSON line. For the orchestrator and report, run the example
-end-to-end and regenerate its artifacts:
+Each must print one JSON line (now `{"impl","bench","mbps","mbps_median","iters"}`). For
+the orchestrator and report, run the unit tests, then the example end-to-end and
+regenerate its artifacts:
 
 ```
+python3 -m unittest discover tests      # harness.py unit tests (stdlib only)
 python3 examples/run.py                 # writes examples/{results.json,RESULTS.md}
 python3 report.py examples/results.json -o examples/report.html
 ```
@@ -105,9 +111,11 @@ from `file://` — Astro's root-absolute CSS path 404s there and renders the pag
 The layout is responsive (one 600px breakpoint); see `web/CLAUDE.md`.
 
 CI (`.github/workflows/ci.yml`) runs these same checks: one job per language template
-(build and run it, assert a JSON line) plus a Python core job. It is path-filtered, so a
-job runs only when its `templates/<lang>/` changed, while a change to `PROTOCOL.md` (the
-shared contract) or the workflow re-runs every template.
+(build and run it, assert a JSON line) plus a Python core job (py_compile, the
+`tests/` unit suite, report generation, the example runner). It is path-filtered, so a
+job runs only when its `templates/<lang>/` changed; the core job also runs on a `tests/`
+change, and a change to `PROTOCOL.md` (the shared contract) or the workflow re-runs every
+template.
 
 Notes on toolchains: the Zig templates target **Zig 0.16** (args via
 `std.process.Init`, timing via `std.Io.Clock`, buffered writer flushed before exit; see

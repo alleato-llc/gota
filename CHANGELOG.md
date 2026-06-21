@@ -20,6 +20,31 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Added
 
+- **Protocol: `mbps_median`.** Each runner now records every measure-phase batch's MB/s
+  and emits the median alongside the peak, so the JSON line is
+  `{"impl","bench","mbps","mbps_median","iters"}`. The gap between peak and median is a
+  stability signal (close = clean run; wide = noisy, peak less trusted). PROTOCOL.md and
+  all seven `templates/<lang>/gota.*` are updated in lockstep; see each template's
+  changelog for its sync.
+- `harness.gather_metadata(toolchains=...)` records each compiler/runtime's version under
+  a `toolchains` key in the results' provenance (absent tools skipped). A throughput
+  number is only reproducible alongside the toolchain that produced it. The example
+  `run.py` passes its toolchains.
+- `harness.Metric` enum (`BYTE_THROUGHPUT` / `OP_THROUGHPUT` / `LATENCY`) and a `metric`
+  field in `results.json`. It records *what kind* of quantity a run measures, distinct
+  from the free-text `units` display label (many labels — "requests/sec", "rows/sec" —
+  map to one metric). `build_results_doc`/`write_results` take an optional `metric=`
+  (default `BYTE_THROUGHPUT`, so existing callers and copied harnesses are unaffected) and
+  validate it (an unknown value raises). The example declares `BYTE_THROUGHPUT`.
+- The example (`examples/`) now covers all seven languages: Zig, Java, and TypeScript
+  runners are added (FNV-1a, matching the existing four), wired into `run.py`. The
+  TypeScript runner uses BigInt for 64-bit math (slow but honest; JS has no native u64).
+- `tests/test_harness.py`: a stdlib-`unittest` suite for `harness.py` (no new
+  dependency) — `Metric` validation, the results-doc shape, `render_markdown`,
+  `compare_runs` (faster/slower/same/new/gone, the tolerance band, and the metric /
+  machine / param guards), the `regressions` gate, the `_first_line` toolchain probe, and
+  `run_all`'s skip-on-None/error/timeout and drop-malformed-JSON behavior. Wired into the
+  `core` CI job.
 - Continuous integration (`.github/workflows/ci.yml`): each language template builds and
   runs standalone and must emit one JSON line, plus a core job that syntax-checks the
   Python and confirms the report generates. It is path-filtered: a `changes` job
@@ -44,6 +69,20 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Changed
 
+- `harness.run_all` is more robust: a per-runner `timeout=` (default 120s) kills and
+  skips a hung runner instead of stalling the whole run, and a malformed JSON line is
+  logged and skipped rather than raising and aborting the collection. Both are
+  backward-compatible (new keyword-only arg; same return shape).
+- The comparison guard (`compare_runs`) now keys comparability on the `metric` kind
+  rather than the free-text `units` string. Two `OP_THROUGHPUT` runs labelled differently
+  ("requests/sec" vs "rows/sec") are comparable; a TPS run and an MB/s run are flagged as
+  not comparable. Results predating the `metric` field are treated as `BYTE_THROUGHPUT`.
+- `report_template.html` is metric-aware. It reads `metric` to choose the headline:
+  `byte_throughput` shows MB/s (unchanged), `op_throughput` derives and shows ops/sec
+  (from `mbps` and the payload size) under the free-text `units` label, and `latency`
+  reads per-call fields with smaller-is-better bars, best-marking, and delta coloring.
+  The metric is shown in the meta, and the in-browser comparison guard mirrors the
+  Python one (flags mismatched metric kinds).
 - The changelog rule (in `CLAUDE.md` and `README.md`) now routes a change to the
   changelog of whatever it touches (core vs a specific language template), instead of a
   single global `CHANGELOG.md`. This file is now scoped to the core.

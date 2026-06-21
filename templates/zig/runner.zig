@@ -12,7 +12,9 @@ const gota = @import("gota.zig");
 
 const IMPL = "example"; // your implementation's name
 
-// Replace with your real operation. It receives the shared buffer.
+// Replace with your real operation. It receives the shared buffer. This example writes
+// the buffer in place, which is always observed. If your op instead computes a value,
+// consume it (e.g. `data[0] ^= @truncate(result)`) or ReleaseFast may delete the work.
 fn exampleOp(data: []u8) void {
     for (data) |*x| x.* ^= 0x5A;
 }
