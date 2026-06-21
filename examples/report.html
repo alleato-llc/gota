@@ -4,6 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gota example — FNV-1a throughput</title>
+<script>
+  // Resolve the theme before first paint, matching the website: a stored choice
+  // (localStorage["gota-theme"], shared when served from the site) wins, otherwise
+  // follow the system and keep following it until the user picks.
+  (() => {
+    const saved = localStorage.getItem("gota-theme");
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const apply = (m) => (document.documentElement.dataset.theme = m);
+    apply(saved || (media.matches ? "dark" : "light"));
+    media.addEventListener("change", (e) => {
+      if (!localStorage.getItem("gota-theme")) apply(e.matches ? "dark" : "light");
+    });
+  })();
+</script>
 <!--
   Gota report template. report.py substitutes three things into this file and writes a
   finished, self-contained report.html: the report title, the embedded results.json
@@ -13,28 +27,33 @@
   report, and the script does not need to change.
 -->
 <style>
-  :root {
-    color-scheme: light dark;
-    --accent: #6366f1;
-    --accent2: #06b6d4;
-    --accent-strong: #4338ca;
-    --bg: #f6f7fb;
-    --card: #ffffff;
-    --border: #e6e6ef;
-    --text: #1a1a22;
-    --muted: #6b7280;
-    --header-grad: linear-gradient(135deg, #6366f1, #06b6d4);
+  /* Palette shared with the gota website: Solarized light / Dracula dark, selected by
+     the `data-theme` attribute (set before first paint by the inline script in <head>).
+     Served from the site's own origin, the report shares its `gota-theme` choice. */
+  :root,
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --accent: #268bd2;
+    --accent2: #2aa198;
+    --accent-strong: #b58900;
+    --bg: #fdf6e3;
+    --card: #eee8d5;
+    --border: rgba(7, 54, 66, 0.14);
+    --text: #073642;
+    --muted: #657b83;
+    --header-grad: linear-gradient(135deg, #268bd2, #2aa198);
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --accent-strong: #a5b4fc;
-      --bg: #14151a;
-      --card: #1d1f27;
-      --border: #2b2e3a;
-      --text: #e9e9f0;
-      --muted: #9aa3b2;
-      --header-grad: linear-gradient(135deg, #4f46e5, #0891b2);
-    }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --accent: #ff79c6;
+    --accent2: #bd93f9;
+    --accent-strong: #ffb86c;
+    --bg: #282a36;
+    --card: #343746;
+    --border: rgba(248, 248, 242, 0.12);
+    --text: #f8f8f2;
+    --muted: #bd93f9;
+    --header-grad: linear-gradient(135deg, #ff79c6, #bd93f9);
   }
   * { box-sizing: border-box; }
   body {
@@ -105,11 +124,18 @@
     border: 1px solid var(--border); background: var(--card); color: var(--muted);
     border-radius: 6px; margin-right: .35rem;
   }
-  .unit-btn.on { background: var(--header-grad); color: #fff; border-color: transparent; font-weight: 600; }
+  .unit-btn.on { background: var(--header-grad); color: var(--bg); border-color: transparent; font-weight: 600; }
+  .theme-toggle {
+    position: fixed; top: 1rem; right: 1rem; z-index: 20;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    border-radius: 8px; width: 2rem; height: 2rem; font-size: .95rem; cursor: pointer; line-height: 1;
+  }
+  .theme-toggle:hover { color: var(--text); }
   footer { margin-top: 1.5rem; }
 </style>
 </head>
 <body>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark theme">◐</button>
   <h1 id="title">Gota example — FNV-1a throughput</h1>
   <div class="muted" id="subtitle"></div>
 
@@ -470,6 +496,18 @@ document.getElementById("file").addEventListener("change", e => {
     };
     reader.readAsText(f);
   });
+});
+
+// Theme toggle: flips and persists the choice (same key/behavior as the website).
+const themeToggle = document.getElementById("themeToggle");
+const syncThemeIcon = () =>
+  themeToggle.textContent = document.documentElement.dataset.theme === "dark" ? "◑" : "◐";
+syncThemeIcon();
+themeToggle.addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("gota-theme", next);
+  syncThemeIcon();
 });
 
 if (EMBEDDED && EMBEDDED.runs) ingest(EMBEDDED.runs, { baseline: EMBEDDED.baseline, tolerance: EMBEDDED.tolerance });

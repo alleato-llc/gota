@@ -39,6 +39,11 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 - The example (`examples/`) now covers all seven languages: Zig, Java, and TypeScript
   runners are added (FNV-1a, matching the existing four), wired into `run.py`. The
   TypeScript runner uses BigInt for 64-bit math (slow but honest; JS has no native u64).
+- `report_template.html` is re-skinned to match the website: the Solarized light /
+  Dracula dark palette via a `data-theme` attribute, a `◐/◑` light/dark toggle, and the
+  same pre-paint theme bootstrap. It shares the website's `gota-theme` localStorage key,
+  so the theme syncs when the report is served from the site, and follows the system by
+  default otherwise. (Replaces the previous standalone indigo palette.)
 - `report_template.html` gains a **MB/s ⇄ ops/sec toggle** for throughput runs (single
   and comparison views). Both units derive from each row's `mbps` and the per-op payload
   size (`params.buffer_bytes`), so one report shows the same run in either unit — same
