@@ -22,11 +22,14 @@ A runner whose toolchain is missing is skipped with a note, not an error.
 For an HTML view of the same data, generate the report from the results.json:
 
 ```
-python3 ../report.py results.json -o report.html --title "Gota example: FNV-1a throughput"
+python3 ../report.py results.json -o report.html --title "Gota example — FNV-1a throughput"
 ```
 
 [`report.html`](report.html) (committed) is a standalone, sortable viewer with a file
-picker, so it can also open any other `results.json` you load into it.
+picker. A **show: MB/s | ops/sec** toggle in the report flips the same measurement
+between byte throughput and operations per second (one op = hashing the whole buffer, so
+ops/sec = MB/s × 1e6 ÷ buffer bytes) — same numbers, same ranking, two units. This is what
+the website showcases.
 
 ## What it measures
 
@@ -55,6 +58,7 @@ examples/
   ts/{gota.ts, runner.ts}
   results.json      # generated
   RESULTS.md        # generated
+  report.html       # generated — MB/s/ops-sec toggle
 ```
 
 The `gota.*` files are copies of the [templates](../templates); only the `runner.*`

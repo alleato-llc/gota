@@ -23,7 +23,11 @@ Keeping all three consistent is the point.
   attribute on `:root`, with CSS custom properties. Light is Solarized, dark is
   Dracula, with a warm secondary accent (`--gold`) for badges, counters, the
   comparison table's Python row, and the honesty note.
-- `src/pages/` holds one file per route. `public/` is served as-is.
+- `src/pages/` holds one file per route. `public/` is served as-is, and includes
+  `report.html` — a copy of the generated `examples/report.html`, linked from the "See a
+  live report" section. The report has a MB/s ⇄ ops/sec toggle, so one page shows the
+  same example run in both units (demonstrating the metric-aware report). Regenerate from
+  `examples/` and re-copy; never hand-edit.
 
 There is no in-browser demo (unlike dorado's `web/`): gota is a copy-it
 reference for a measurement protocol, not a runnable artifact, so the page is

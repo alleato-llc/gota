@@ -126,11 +126,12 @@ def main() -> None:
     harness.log(f"params: buf={BUF} warmup={WARMUP} measure={MEASURE}")
     rows = harness.run_all(SPECS, BUF, WARMUP, MEASURE)
     meta = harness.gather_metadata(toolchains=TOOLCHAINS)
+    params = {"buffer_bytes": BUF, "warmup_s": WARMUP, "measure_s": MEASURE}
     harness.write_results(
         rows,
         "results.json",
         "RESULTS.md",
-        params={"buffer_bytes": BUF, "warmup_s": WARMUP, "measure_s": MEASURE},
+        params=params,
         meta=meta,
         metric=harness.Metric.BYTE_THROUGHPUT,
         units="MB/s (decimal, 1e6 bytes), peak of batches",

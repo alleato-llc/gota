@@ -20,6 +20,20 @@ every component is in [VERSIONS.md](../VERSIONS.md).
   dependency), so the section reinforces the hero's "the protocol is the product"
   framing rather than implying gota is a peer framework you install.
 
+- A "See a live report" section (and a `Report` nav link) showcasing the generated
+  example report, served from `public/` (soroban-style): one self-contained
+  `report.html` with a MB/s ⇄ ops/sec toggle, so a single page shows the same FNV run in
+  both units.
+
+### Changed
+
+- Reflect the latest protocol/orchestrator changes: the JSON line now reads
+  `{"impl","bench","mbps","mbps_median","iters"}` (Measure card + protocol
+  checklist), the peak-of-batches item notes the peak-vs-median stability check,
+  the orchestrator records toolchain-version provenance, and the report card
+  mentions metric-aware units (MB/s or ops/sec). No latency/IO claims — those are
+  design-only and unshipped.
+
 ## [0.1.0]
 
 ### Added

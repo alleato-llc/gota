@@ -39,6 +39,12 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 - The example (`examples/`) now covers all seven languages: Zig, Java, and TypeScript
   runners are added (FNV-1a, matching the existing four), wired into `run.py`. The
   TypeScript runner uses BigInt for 64-bit math (slow but honest; JS has no native u64).
+- `report_template.html` gains a **MB/s ⇄ ops/sec toggle** for throughput runs (single
+  and comparison views). Both units derive from each row's `mbps` and the per-op payload
+  size (`params.buffer_bytes`), so one report shows the same run in either unit — same
+  ranking, same bars, same deltas (delta % is unit-invariant), only the numbers relabel.
+  Hidden for `latency` runs and when the payload size is unknown. The committed example
+  `report.html` (and its `web/public/` copy showcased by the site) carries the toggle.
 - `tests/test_harness.py`: a stdlib-`unittest` suite for `harness.py` (no new
   dependency) — `Metric` validation, the results-doc shape, `render_markdown`,
   `compare_runs` (faster/slower/same/new/gone, the tolerance band, and the metric /

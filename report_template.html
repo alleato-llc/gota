@@ -100,6 +100,12 @@
   .delta { margin-left: .5rem; font-size: .82rem; font-variant-numeric: tabular-nums; opacity: .85; }
   .tag { font-size: .75rem; color: var(--muted); }
   select { font: inherit; padding: .2rem .45rem; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+  .unit-btn {
+    font: inherit; font-size: .85rem; cursor: pointer; padding: .15rem .6rem;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    border-radius: 6px; margin-right: .35rem;
+  }
+  .unit-btn.on { background: var(--header-grad); color: #fff; border-color: transparent; font-weight: 600; }
   footer { margin-top: 1.5rem; }
 </style>
 </head>
@@ -134,22 +140,38 @@ const fmt = (n, unit) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) +
   (unit ? " " + unit : "");
 
-// The headline quantity depends on the run's `metric`. Rows always carry `mbps`
-// (bytes/sec); op-throughput derives ops/sec from it and the per-op payload size, and
-// latency (per-call engine) reads p50. Returns the value extractor, the unit label
-// (falling back to the first word of `units`), and whether smaller is better.
+// Viewer-level override of the displayed unit: null = follow the run's metric,
+// "mbps" = force MB/s, "ops" = force ops/sec. MB/s and ops/sec are the same rate scaled
+// by the per-op payload, so this is a pure relabel/rescale — order, bars, and best are
+// identical, only the numbers change. The toggle in the meta card sets it.
+let unitMode = null;
+
+// The headline quantity. Rows always carry `mbps` (bytes/sec); ops/sec derives from it
+// and the per-op payload size, latency reads p50. For throughput runs, `unitMode` can
+// flip between MB/s and ops/sec (`toggle` is true when the payload size is known).
+// Returns the value extractor, the unit label, smaller-is-better, and the toggle state.
 function headline(doc) {
   const metric = doc.metric || "byte_throughput";
+  const p = doc.params || {};
+  const bytes = p.buffer_bytes != null ? p.buffer_bytes : p.buf;
   const label = (doc.units || "").split(/\s+/)[0];
-  if (metric === "op_throughput") {
-    const p = doc.params || {};
-    const bytes = p.buffer_bytes != null ? p.buffer_bytes : p.buf;
-    return { val: r => (bytes ? r.mbps * 1e6 / bytes : r.mbps), unit: label || "ops/sec", lowerBetter: false };
-  }
   if (metric === "latency") {
-    return { val: r => (r.p50 != null ? r.p50 : r.mbps), unit: label || "ms", lowerBetter: true };
+    return { val: r => (r.p50 != null ? r.p50 : r.mbps), unit: label || "ms", lowerBetter: true, toggle: false };
   }
-  return { val: r => r.mbps, unit: label || "MB/s", lowerBetter: false };
+  const mode = unitMode || (metric === "op_throughput" ? "ops" : "mbps");
+  const canToggle = bytes != null;
+  if (mode === "ops") {
+    return {
+      val: r => (bytes ? (r.mbps * 1e6) / bytes : r.mbps),
+      unit: metric === "op_throughput" && label ? label : "ops/sec",
+      lowerBetter: false, toggle: canToggle, mode: "ops",
+    };
+  }
+  return {
+    val: r => r.mbps,
+    unit: metric === "byte_throughput" && label ? label : "MB/s",
+    lowerBetter: false, toggle: canToggle, mode: "mbps",
+  };
 }
 
 // Best value in a column: the max, or the min when smaller is better (latency).
@@ -211,6 +233,7 @@ function show() {
 
 function renderSingle(doc) {
   const status = document.getElementById("status");
+  const h = headline(doc);
   const { impls, benches, by, unit, lowerBetter } = pivot(doc);
   const color = {};
   impls.forEach((i, k) => color[i] = PALETTE[k % PALETTE.length]);
@@ -228,11 +251,21 @@ function renderSingle(doc) {
   const paramRows = Object.keys(p).map(k => `<dt>${k}</dt><dd><code>${p[k]}</code></dd>`).join("");
   const legend = impls.map(i =>
     `<span class="pill" style="background:${color[i]}">${i}</span>`).join("");
+  // For a throughput run with a known payload size, offer a MB/s <-> ops/sec toggle:
+  // same rate, two units. (Same numbers as two separate metric runs, in one report.)
+  const toggle = h.toggle ? `<dt>show</dt><dd>
+    <button class="unit-btn${h.mode === "mbps" ? " on" : ""}" data-unit="mbps">MB/s</button>
+    <button class="unit-btn${h.mode === "ops" ? " on" : ""}" data-unit="ops">ops/sec</button>
+  </dd>` : "";
   const metaCard = `<div class="card"><div class="meta-grid">
-    ${paramRows}<dt>metric</dt><dd><code>${doc.metric || "byte_throughput"}</code></dd>${doc.units ? `<dt>units</dt><dd>${doc.units}</dd>` : ""}
+    ${paramRows}<dt>metric</dt><dd><code>${doc.metric || "byte_throughput"}</code></dd>${doc.units ? `<dt>units</dt><dd>${doc.units}</dd>` : ""}${toggle}
   </div><div class="legend">${legend}</div></div>`;
 
   document.getElementById("report").innerHTML = metaCard + '<div class="card" id="tablecard"></div>';
+  document.querySelectorAll(".unit-btn").forEach(btn => btn.addEventListener("click", () => {
+    unitMode = btn.dataset.unit;
+    show();
+  }));
   drawTable();
 }
 
@@ -379,11 +412,17 @@ function renderComparison() {
 
   const opts = loadedRuns.map(r => `<option ${r.label === baselineLabel ? "selected" : ""}>${r.label}</option>`).join("");
   const legend = impls.map(i => `<span class="pill" style="background:${color[i]}">${i}</span>`).join("");
+  // Unit toggle: delta % is unit-invariant (MB/s and ops/sec differ by a constant), so
+  // this only relabels the absolute numbers, not the deltas or their colors.
+  const toggle = bh.toggle ? `<dt>show</dt><dd>
+    <button class="unit-btn${bh.mode === "mbps" ? " on" : ""}" data-unit="mbps">MB/s</button>
+    <button class="unit-btn${bh.mode === "ops" ? " on" : ""}" data-unit="ops">ops/sec</button>
+  </dd>` : "";
   let html = `<div class="card"><div class="meta-grid">
     <dt>baseline</dt><dd><select id="baseline">${opts}</select></dd>
     ${base.machine ? `<dt>machine</dt><dd>${base.machine}</dd>` : ""}
     <dt>metric</dt><dd><code>${base.metric || "byte_throughput"}</code></dd>
-    ${base.units ? `<dt>units</dt><dd>${base.units}</dd>` : ""}
+    ${base.units ? `<dt>units</dt><dd>${base.units}</dd>` : ""}${toggle}
     <dt>tolerance</dt><dd>±${(tolerance * 100).toFixed(1)}% — changes within the band are not flagged</dd>
   </div><div class="legend">${legend}</div></div>`;
 
@@ -400,6 +439,10 @@ function renderComparison() {
   document.getElementById("report").innerHTML = html;
   const sel = document.getElementById("baseline");
   if (sel) sel.addEventListener("change", () => { baselineLabel = sel.value; show(); });
+  document.querySelectorAll(".unit-btn").forEach(btn => btn.addEventListener("click", () => {
+    unitMode = btn.dataset.unit;
+    show();
+  }));
 }
 
 document.getElementById("file").addEventListener("change", e => {

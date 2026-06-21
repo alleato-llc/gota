@@ -29,7 +29,12 @@ language comparison table scrolls within its own box rather than overflowing the
 - `src/components/ThemeToggle.tsx` — the Preact theme toggle island.
 - `src/styles/global.css` — the two-theme design system (light / dark via the
   `data-theme` attribute on `:root`).
-- `public/` — static assets served as-is (the favicon).
+- `public/` — static assets served as-is: the favicon, and the showcased example
+  report (`report.html`) linked from the "See a live report" section. It is a copy
+  of the generated `examples/report.html` (regenerate with `python3 examples/run.py`
+  then `report.py`, and re-copy into `public/`); like the rest of the example
+  artifacts it is generated, never hand-edited. The report carries a MB/s ⇄ ops/sec
+  toggle, so one page shows both units.
 
 ## Theming
 

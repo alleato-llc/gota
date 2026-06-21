@@ -195,7 +195,7 @@ const approachRows = [
             <span>
               {" "}One native runner per language. Copy <code>gota.&lt;lang&gt;</code>
               as-is; it runs the peak-of-batches timing loop and prints one JSON
-              line, <code>{`{"impl","bench","mbps","iters"}`}</code>, per benchmark.
+              line, <code>{`{"impl","bench","mbps","mbps_median","iters"}`}</code>, per benchmark.
             </span>
           </div>
         </div>
@@ -205,8 +205,8 @@ const approachRows = [
             <span>
               {" "}Python, once, across every language. <code>harness.py</code>
               builds and runs each runner under identical parameters, collects
-              their JSON, records machine/date/git provenance, and writes
-              <code>results.json</code> + a Markdown table.
+              their JSON, records machine, date, git, and toolchain-version
+              provenance, and writes <code>results.json</code> + a Markdown table.
             </span>
           </div>
         </div>
@@ -216,7 +216,8 @@ const approachRows = [
             <span>
               {" "}Optional and generic over the format. <code>report.py</code>
               turns any <code>results.json</code> into a standalone, sortable HTML
-              viewer with a file picker, formatted units, and baseline comparison.
+              viewer with a file picker, metric-aware units (MB/s or ops/sec), and
+              baseline comparison.
             </span>
           </div>
         </div>
@@ -276,6 +277,27 @@ const approachRows = [
     </div>
   </section>
 
+  <section id="report">
+    <div class="wrap">
+      <h2>See a live report</h2>
+      <p class="sub">
+        The bundled example — FNV-1a across all seven languages — rendered by
+        <code>report.py</code> into a standalone, sortable HTML viewer. One toggle in
+        the report flips the same measurement between byte throughput (MB/s) and
+        operations per second (one op = hashing the whole 64 KiB buffer): same numbers,
+        same ranking, two units.
+      </p>
+      <div class="cta" style="justify-content: flex-start;">
+        <a class="btn primary" href="/report.html">Open the live report</a>
+      </div>
+      <p class="sub" style="margin-top: 1rem;">
+        A self-contained page with a file picker, so you can drop any other
+        <code>results.json</code> in and re-render. Generated from the committed example
+        data, never hand-edited.
+      </p>
+    </div>
+  </section>
+
   <section id="protocol">
     <div class="wrap">
       <h2>The protocol is the product</h2>
@@ -291,14 +313,16 @@ const approachRows = [
           seconds — passed identically to every runner.
         </li>
         <li>
-          <b>Peak of batches.</b> Warm up the JIT, grow a batch until it runs
-          &ge; 100ms, then report the fastest batch's MB/s. The clock is read
-          only at batch boundaries, never around one tiny op.
+          <b>Peak of batches, with a stability check.</b> Warm up the JIT, grow a
+          batch until it runs &ge; 100ms, then report the fastest batch's MB/s
+          next to the median of all batches — a close gap means a clean run, a wide
+          one means the peak is noisy. The clock is read only at batch boundaries,
+          never around one tiny op.
         </li>
         <li>
           <b>One JSON line per benchmark</b> on stdout
-          (<code>{`{"impl","bench","mbps","iters"}`}</code>) — the entire wire
-          format between a runner and the orchestrator.
+          (<code>{`{"impl","bench","mbps","mbps_median","iters"}`}</code>) — the
+          entire wire format between a runner and the orchestrator.
         </li>
         <li>
           <b>Kept equivalent across all seven templates.</b> Change the loop in
