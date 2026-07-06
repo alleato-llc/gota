@@ -19,6 +19,7 @@ Core and is then referenced from each language template's changelog as it syncs.
 | C template | 0.1.0 | [templates/c/CHANGELOG.md](templates/c/CHANGELOG.md) | `templates/c/` |
 | Go template | 0.1.0 | [templates/go/CHANGELOG.md](templates/go/CHANGELOG.md) | `templates/go/` |
 | Java template | 0.1.0 | [templates/java/CHANGELOG.md](templates/java/CHANGELOG.md) | `templates/java/` |
+| Swift template | 0.1.0 | [templates/swift/CHANGELOG.md](templates/swift/CHANGELOG.md) | `templates/swift/` |
 | Zig template | 0.1.0 | [templates/zig/CHANGELOG.md](templates/zig/CHANGELOG.md) | `templates/zig/` |
 | TypeScript template | 0.1.0 | [templates/ts/CHANGELOG.md](templates/ts/CHANGELOG.md) | `templates/ts/` |
 | Haskell template | 0.1.0 | [templates/haskell/CHANGELOG.md](templates/haskell/CHANGELOG.md) | `templates/haskell/` |

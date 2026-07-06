@@ -1,6 +1,6 @@
 # Benchmark results
 
-Example Gota run: FNV-1a over a 64 KiB buffer in eight languages under one
+Example Gota run: FNV-1a over a 64 KiB buffer in nine languages under one
 protocol. Peak MB/s (decimal, 1e6 bytes), higher is better; results.json also records
 each run's median rate (mbps_median) as a stability signal.
 
@@ -10,15 +10,16 @@ tight scalar loop, nothing more (the TypeScript runner uses BigInt for 64-bit ma
 which is genuinely slow — an honest artifact, not a bug; the Haskell runner threads and
 forces an accumulator so laziness cannot defer or share the work).
 
-Machine: Apple M4 Max | Darwin arm64 | 2026-06-21 | commit eeef984.
+Machine: Apple M4 Max | Darwin arm64 | 2026-07-06 | commit 0a65e10.
 
 | Implementation | FNV-1a 64 |
 | --- | ---: |
-| Rust | 1117.5 |
-| C | 1118.2 |
-| Go | 1114.3 |
-| Zig | 1115.2 |
-| Java | 1117.2 |
-| Haskell | 1113.1 |
-| Python | 19.7 |
-| TypeScript | 86.6 |
+| Rust | 1113.6 |
+| C | 1113.4 |
+| Go | 1113.2 |
+| Zig | 1113.5 |
+| Java | 1116.1 |
+| Swift | 1111.7 |
+| Haskell | 1112.4 |
+| Python | 20.5 |
+| TypeScript | 90.6 |

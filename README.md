@@ -20,7 +20,7 @@ When you have the same operation implemented in several languages and want an ho
 The reusable thing here is the **protocol and the lessons**, not the code: a
 peak-of-batches loop is ~20 lines you can re-type once you know the recipe. So Gota
 is meant to be **copied, not depended on** — the helpers are small, stable, and
-polyglot (no single package manager spans Rust, Go, Zig, C, Java, Python, and
+polyglot (no single package manager spans Rust, Go, Zig, C, Java, Swift, Python, and
 TypeScript), so copying is the pragmatic, low-harm choice. Re-copy when the protocol
 improves.
 
@@ -155,6 +155,7 @@ any language-specific notes.
 | C | `templates/c/{gota.h, gota.c, runner.c}` | [README](templates/c/README.md) |
 | Go | `templates/go/{go.mod, gota/gota.go, runner.go}` | [README](templates/go/README.md) |
 | Java | `templates/java/{Gota.java, Runner.java}` | [README](templates/java/README.md) |
+| Swift | `templates/swift/{Gota.swift, runner.swift}` | [README](templates/swift/README.md) |
 | Zig | `templates/zig/{gota.zig, runner.zig}` | [README](templates/zig/README.md) |
 | TypeScript | `templates/ts/{gota.ts, runner.ts}` | [README](templates/ts/README.md) |
 | Haskell | `templates/haskell/{Gota.hs, runner.hs}` | [README](templates/haskell/README.md) |

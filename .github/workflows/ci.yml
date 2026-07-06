@@ -17,6 +17,7 @@ jobs:
       c: ${{ steps.filter.outputs.c }}
       go: ${{ steps.filter.outputs.go }}
       java: ${{ steps.filter.outputs.java }}
+      swift: ${{ steps.filter.outputs.swift }}
       zig: ${{ steps.filter.outputs.zig }}
       ts: ${{ steps.filter.outputs.ts }}
       haskell: ${{ steps.filter.outputs.haskell }}
@@ -45,6 +46,9 @@ jobs:
             java:
               - *protocol
               - 'templates/java/**'
+            swift:
+              - *protocol
+              - 'templates/swift/**'
             zig:
               - *protocol
               - 'templates/zig/**'
@@ -115,6 +119,17 @@ jobs:
           distribution: temurin
           java-version: "21"
       - run: cd templates/java && javac Gota.java Runner.java && java Runner 65536 0.1 0.2 | grep '"mbps"'
+
+  swift:
+    needs: changes
+    if: needs.changes.outputs.swift == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+      - run: cd templates/swift && swiftc -O Gota.swift runner.swift -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   zig:
     needs: changes
