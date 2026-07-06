@@ -20,6 +20,11 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Added
 
+- A ninth language template: **Swift** (`templates/swift/`, see its changelog), wired into
+  the example (`examples/swift/`, FNV-1a) and `run.py`. Swift reserves top-level code for
+  `main.swift`, so the runner is an `@main struct`; timing uses
+  `DispatchTime.now().uptimeNanoseconds` (monotonic). A `swift` CI job builds and
+  smoke-runs it, and the example now spans nine languages.
 - **Protocol: `mbps_median`.** Each runner now records every measure-phase batch's MB/s
   and emits the median alongside the peak, so the JSON line is
   `{"impl","bench","mbps","mbps_median","iters"}`. The gap between peak and median is a

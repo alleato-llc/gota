@@ -82,6 +82,13 @@ def prep_haskell():
     return ["haskell/runner"]
 
 
+def prep_swift():
+    if not harness.which("swiftc"):
+        return None
+    _build(["swiftc", "-O", "Gota.swift", "runner.swift", "-o", "runner"], cwd="swift")
+    return ["swift/runner"]
+
+
 SPECS = [
     RunnerSpec("python", prep_python),
     RunnerSpec("c", prep_c),
@@ -89,6 +96,7 @@ SPECS = [
     RunnerSpec("rust", prep_rust),
     RunnerSpec("zig", prep_zig),
     RunnerSpec("java", prep_java),
+    RunnerSpec("swift", prep_swift),
     RunnerSpec("ts", prep_ts),
     RunnerSpec("haskell", prep_haskell),
 ]
@@ -102,15 +110,16 @@ TOOLCHAINS = {
     "go": ["go", "version"],
     "zig": ["zig", "version"],
     "java": ["java", "-version"],
+    "swift": ["swift", "--version"],
     "python": ["python3", "--version"],
     "ts": ["node", "--version"],
     "haskell": ["ghc", "--numeric-version"],
 }
 
-IMPL_ORDER = ["rust", "c", "go", "zig", "java", "haskell", "python", "ts"]
+IMPL_ORDER = ["rust", "c", "go", "zig", "java", "swift", "haskell", "python", "ts"]
 IMPL_LABELS = {
     "rust": "Rust", "c": "C", "go": "Go", "zig": "Zig", "java": "Java",
-    "haskell": "Haskell", "python": "Python", "ts": "TypeScript",
+    "swift": "Swift", "haskell": "Haskell", "python": "Python", "ts": "TypeScript",
 }
 BENCH_ORDER = ["fnv1a-64"]
 BENCH_LABELS = {"fnv1a-64": "FNV-1a 64"}
@@ -118,7 +127,7 @@ BENCH_LABELS = {"fnv1a-64": "FNV-1a 64"}
 
 def intro(meta: dict) -> str:
     return f"""\
-Example Gota run: FNV-1a over a {BUF // 1024} KiB buffer in eight languages under one
+Example Gota run: FNV-1a over a {BUF // 1024} KiB buffer in nine languages under one
 protocol. Peak MB/s (decimal, 1e6 bytes), higher is better; results.json also records
 each run's median rate (mbps_median) as a stability signal.
 
