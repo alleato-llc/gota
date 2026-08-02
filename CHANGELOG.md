@@ -105,7 +105,9 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 - **CI triggers** now match the sibling soroban repo: `pull_request` plus pushes to `main`
   (was: every push on every branch, *and* every PR — two runs per commit on a PR branch),
   with a `concurrency` group so a newer push cancels the superseded run and an explicit
-  `permissions: contents: read`.
+  `permissions` block (`contents: read` plus `pull-requests: read`, which
+  `dorny/paths-filter` needs to read a PR's changed-file list — without it the `changes`
+  job fails on every PR and every real job skips).
 - `harness.run_all` is more robust: a per-runner `timeout=` (default 120s) kills and
   skips a hung runner instead of stalling the whole run, and a malformed JSON line is
   logged and skipped rather than raising and aborting the collection. Both are
