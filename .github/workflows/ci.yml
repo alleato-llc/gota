@@ -182,7 +182,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: mlugg/setup-zig@v1
+      # v2 or newer is required: Zig 0.15+ renamed its tarballs from
+      # zig-<os>-<arch>-<ver> to zig-<arch>-<os>-<ver>, and v1 still builds the old
+      # name — so it 404s on every mirror AND on ziglang.org itself, which reads as
+      # an outage rather than a stale action.
+      - uses: mlugg/setup-zig@v2
         with:
           version: "0.16.0"
       - run: cd templates/zig && zig build-exe runner.zig -O ReleaseFast && ./runner 65536 0.1 0.2 | grep '"mbps"'
