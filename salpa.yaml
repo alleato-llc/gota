@@ -1,0 +1,9 @@
+# Site deploy config for salpa (github.com/alleato-llc/salpa), run from the repo
+# root by deploy-site.yml. Gota publishes no binaries — there is no release
+# lifecycle here, only the landing page — so this file is deploy-only.
+product: Gota
+
+deploy:
+  source: web # npm build; sync web/dist
+  bucket: gota.alleato.dev # the site host
+  invalidate: true # bust the CDN cache after deploy

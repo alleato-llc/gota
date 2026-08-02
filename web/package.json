@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/sync-report.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/sync-report.mjs",
     "build": "astro build",
     "preview": "astro preview"
   },

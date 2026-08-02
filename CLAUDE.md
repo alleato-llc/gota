@@ -112,11 +112,33 @@ from `file://` — Astro's root-absolute CSS path 404s there and renders the pag
 The layout is responsive (one 600px breakpoint); see `web/CLAUDE.md`.
 
 CI (`.github/workflows/ci.yml`) runs these same checks: one job per language template
-(build and run it, assert a JSON line) plus a Python core job (py_compile, the
-`tests/` unit suite, report generation, the example runner). It is path-filtered, so a
-job runs only when its `templates/<lang>/` changed; the core job also runs on a `tests/`
-change, and a change to `PROTOCOL.md` (the shared contract) or the workflow re-runs every
-template.
+(build and run it, assert a JSON line), a Python core job (py_compile, the
+`tests/` unit suite, report generation, the example runner), and a `web` job that builds
+the landing page. It is path-filtered, so a job runs only when its `templates/<lang>/`
+changed; the core job also runs on a `tests/` change, the `web` job only on `web/**`, and
+a change to `PROTOCOL.md` (the shared contract) or the workflow re-runs every template.
+It runs on every PR and on pushes to `main`.
+
+The one check to require in branch protection is **`ci-passed`**, the gate job at the
+bottom: it always runs and fails only if some suite genuinely failed or was cancelled — a
+*skipped* job (its paths didn't change) is a pass. Requiring the individual jobs instead
+would leave them "Expected" forever on a partial-path PR. When you add a language
+template, add its job to that gate's `needs:` list too, or its failures won't block a merge.
+
+## Deploying the landing page
+
+`.github/workflows/deploy-site.yml` publishes `web/` to **gota.alleato.dev** on every push
+to `main` that touches `web/` (or `salpa.yaml`, or the workflow); nothing else triggers
+it, and it can be run by hand with `workflow_dispatch`. The deploy itself is `salpa deploy`
+(the house release tool, pulled pinned from ghcr), configured by `salpa.yaml` at the repo
+root: it builds `web/` with npm, syncs `web/dist` to S3, and invalidates the CloudFront
+cache. Credentials are short-lived OIDC (`AWS_SITE_ROLE_ARN` as a **secret**, `AWS_REGION`
+as a variable) — no stored keys, and no raw aws-cli in the workflow. The bucket, CDN, DNS,
+and deploy role are provisioned separately as IaC (`nycjv321-infrastructure/projects/gota`).
+
+Gota publishes **no binaries** and cuts no releases, so unlike the sibling dorado/soroban
+repos there is no release workflow and no `release:` trigger on the deploy. This mirrors
+soroban's split otherwise: CI validates on PRs, the deploy ships from `main`.
 
 Notes on toolchains: the Zig templates target **Zig 0.16** (args via
 `std.process.Init`, timing via `std.Io.Clock`, buffered writer flushed before exit; see
@@ -138,7 +160,10 @@ contract).
 
 - **No fabricated numbers.** Every benchmark figure must come from a real run on a
   stated machine; `RESULTS.md`/`results.json`/`report.html` are generated, never
-  hand-edited. Do not commit numbers from CI (its hardware varies).
+  hand-edited. Do not commit numbers from CI (its hardware varies). There is exactly one
+  copy of any given run: the landing page's showcased report is *copied* from
+  `examples/report.html` at build time (`web/scripts/sync-report.mjs`), not duplicated
+  into `web/public/`, because the duplicate drifted once already.
 - **Honest framing.** Peak-of-batches is the *unimpeded* rate: right for comparing
   implementations, optimistic for real-world latency. Naive code shows
   language/runtime overhead, not how fast tuned/SIMD code can go. Say so.
