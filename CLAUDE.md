@@ -134,7 +134,8 @@ it, and it can be run by hand with `workflow_dispatch`. The deploy itself is `sa
 root: it builds `web/` with npm, syncs `web/dist` to S3, and invalidates the CloudFront
 cache. Credentials are short-lived OIDC (`AWS_SITE_ROLE_ARN` as a **secret**, `AWS_REGION`
 as a variable) — no stored keys, and no raw aws-cli in the workflow. The bucket, CDN, DNS,
-and deploy role are provisioned separately as IaC (`nycjv321-infrastructure/projects/gota`).
+and deploy role are provisioned separately as IaC, in a repo this one does not name (the
+sibling projects deliberately dropped that reference from their public docs).
 
 Gota publishes **no binaries** and cuts no releases, so unlike the sibling dorado/soroban
 repos there is no release workflow and no `release:` trigger on the deploy. This mirrors
