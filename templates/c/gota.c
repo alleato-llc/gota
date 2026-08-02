@@ -1,4 +1,14 @@
 /* Gota harness (C, C17) - implementation. Copy as-is and do not edit. */
+
+/* clock_gettime/CLOCK_MONOTONIC are POSIX, not ISO C, so glibc hides them under a
+   strict -std=c17 unless this feature-test macro is defined FIRST - before any
+   header is included. Apple's libc exposes them regardless, so omitting this builds
+   fine on macOS and fails only on Linux ("CLOCK_MONOTONIC undeclared"). Defining it
+   is portable: platforms that don't need it ignore it. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "gota.h"
 
 #include <stdint.h>

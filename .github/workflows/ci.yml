@@ -26,8 +26,8 @@ permissions:
   # `permissions:` at all replaces the token's defaults, so omitting this fails the
   # `changes` job on every PR with "Resource not accessible by integration" — and
   # then every real job skips and only the gate goes red. The sibling dorado/soroban
-  # workflows omit it because they are pushed to directly and never hit that path;
-  # do not "align" this away.
+  # workflows omit it and are fine only because they are PUBLIC (a public repo's PR
+  # file list is readable without the scope); do not "align" this away.
   pull-requests: read
 
 # One live run per ref — a newer push cancels the superseded run.

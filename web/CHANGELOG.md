@@ -15,7 +15,7 @@ every component is in [VERSIONS.md](../VERSIONS.md).
   via `salpa deploy` (pinned from ghcr) configured by the new root `salpa.yaml`: npm build,
   sync `web/dist` to S3, invalidate CloudFront. Auth is short-lived OIDC — `AWS_SITE_ROLE_ARN`
   is a **secret** (a variable is not redacted in the step's own log preamble), `AWS_REGION`
-  a variable; the bucket/CDN/DNS/role are IaC (`nycjv321-infrastructure/projects/gota`).
+  a variable; the bucket/CDN/DNS/role are provisioned separately as IaC.
   Mirrors the dorado and soroban site deploys, minus their release triggers — gota ships no
   binaries. The matching pre-merge build job is in the [core CHANGELOG](../CHANGELOG.md).
 - `scripts/sync-report.mjs`, wired as npm's `prebuild`/`predev`, copies
@@ -52,6 +52,9 @@ every component is in [VERSIONS.md](../VERSIONS.md).
 
 ### Fixed
 
+- Every "view the source" link pointed at a repository that isn't this one: the page's
+  single `REPO` constant read `github.com/nycjv321/gota` while the remote is
+  `alleato-llc/gota`, so all of them 404'd. Corrected at the constant.
 - The showcased report no longer drifts from the example it claims to be. The committed
   `public/report.html` had gone stale — it embedded a 2026-06-21 run while
   `examples/report.html` (same machine) carried 2026-07-06, so the published page

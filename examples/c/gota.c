@@ -1,4 +1,11 @@
 /* Gota harness (C, C17) - implementation. Copy as-is and do not edit. */
+/* clock_gettime/CLOCK_MONOTONIC are POSIX, not ISO C: glibc hides them under a
+   strict -std=c17 unless this is defined before any include. See the note in
+   templates/c/gota.c. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "gota.h"
 
 #include <stdint.h>

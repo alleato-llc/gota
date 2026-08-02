@@ -8,6 +8,14 @@ version of every component is in [VERSIONS.md](../../VERSIONS.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- `gota.c` now defines `_POSIX_C_SOURCE` before any include, so it builds on Linux.
+  `clock_gettime`/`CLOCK_MONOTONIC` are POSIX, not ISO C, and glibc hides them under the
+  documented `-std=c17`; Apple's libc exposes them anyway, so this compiled locally on
+  macOS and failed only in CI ("`CLOCK_MONOTONIC` undeclared"). The same fix is applied to
+  the example's copy (`examples/c/gota.c`).
+
 ### Changed
 
 - Synced to the protocol's `mbps_median` addition (see the [core changelog](../../CHANGELOG.md)): `gota.c` now records each measure-phase
