@@ -102,6 +102,10 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 - **CI housekeeping**, aligning with soroban: `actions/checkout` pinned to `v5` (was `v4`),
   every job carries a display `name:`, and the `web` job runs Node 22 (the deploy stays on
   20, matching the sibling deploys).
+- **CI: `mlugg/setup-zig` bumped to `v2`.** Zig 0.15+ renamed its tarballs from
+  `zig-<os>-<arch>-<ver>` to `zig-<arch>-<os>-<ver>`; `v1` still requests the old name, so
+  fetching 0.16.0 404'd on every mirror and on ziglang.org itself. The Zig job had never
+  actually run since the template landed, so this was latent, not a regression.
 - **CI triggers** now match the sibling soroban repo: `pull_request` plus pushes to `main`
   (was: every push on every branch, *and* every PR — two runs per commit on a PR branch),
   with a `concurrency` group so a newer push cancels the superseded run and an explicit
