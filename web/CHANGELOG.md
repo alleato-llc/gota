@@ -10,6 +10,17 @@ every component is in [VERSIONS.md](../VERSIONS.md).
 
 ### Added
 
+- **A deploy pipeline for the page.** `.github/workflows/deploy-site.yml` publishes `web/`
+  to **gota.alleato.dev** on pushes to `main` that touch `web/` (plus `workflow_dispatch`),
+  via `salpa deploy` (pinned from ghcr) configured by the new root `salpa.yaml`: npm build,
+  sync `web/dist` to S3, invalidate CloudFront. Auth is short-lived OIDC — `AWS_SITE_ROLE_ARN`
+  is a **secret** (a variable is not redacted in the step's own log preamble), `AWS_REGION`
+  a variable; the bucket/CDN/DNS/role are IaC (`nycjv321-infrastructure/projects/gota`).
+  Mirrors the dorado and soroban site deploys, minus their release triggers — gota ships no
+  binaries. The matching pre-merge build job is in the [core CHANGELOG](../CHANGELOG.md).
+- `scripts/sync-report.mjs`, wired as npm's `prebuild`/`predev`, copies
+  `examples/report.html` into `public/report.html` at build time (including the build
+  `salpa deploy` runs). `public/report.html` is now gitignored rather than committed.
 - A "What a micro-benchmark is" section (and a matching nav link) after the hero:
   a plain-language definition plus a comparison table placing gota among the
   traditional performance approaches (micro-benchmark vs macro/application
@@ -38,6 +49,16 @@ every component is in [VERSIONS.md](../VERSIONS.md).
   the orchestrator records toolchain-version provenance, and the report card
   mentions metric-aware units (MB/s or ops/sec). No latency/IO claims — those are
   design-only and unshipped.
+
+### Fixed
+
+- The showcased report no longer drifts from the example it claims to be. The committed
+  `public/report.html` had gone stale — it embedded a 2026-06-21 run while
+  `examples/report.html` (same machine) carried 2026-07-06, so the published page
+  advertised older numbers than the repo. It is now copied at build time from the single
+  source under `examples/`, and a missing source fails the build instead of shipping a
+  dead link. The copy step never *generates* numbers: CI hardware varies, so the figures
+  can only come from a real run on a stated machine.
 
 ## [0.1.0]
 

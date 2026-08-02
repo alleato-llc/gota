@@ -30,11 +30,13 @@ language comparison table scrolls within its own box rather than overflowing the
 - `src/styles/global.css` — the two-theme design system (light / dark via the
   `data-theme` attribute on `:root`).
 - `public/` — static assets served as-is: the favicon, and the showcased example
-  report (`report.html`) linked from the "See a live report" section. It is a copy
-  of the generated `examples/report.html` (regenerate with `python3 examples/run.py`
-  then `report.py`, and re-copy into `public/`); like the rest of the example
-  artifacts it is generated, never hand-edited. The report carries a MB/s ⇄ ops/sec
-  toggle, so one page shows both units.
+  report (`report.html`) linked from the "See a live report" section. That report is
+  **copied in at build time** from the generated `examples/report.html` by
+  `scripts/sync-report.mjs` (npm's `prebuild`/`predev` hook), so it cannot drift from
+  the committed example; it is gitignored, not checked in. To refresh it, regenerate the
+  example (`python3 examples/run.py`, then `report.py`) — the next build picks it up.
+  Like the rest of the example artifacts it is generated, never hand-edited. The report
+  carries a MB/s ⇄ ops/sec toggle, so one page shows both units.
 
 ## Theming
 

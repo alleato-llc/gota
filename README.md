@@ -265,7 +265,9 @@ your own systems (CI, a dashboard, a database, a PR comment):
 Gota — content only, no benchmark code and no invented numbers. It is an independent
 component (its structure follows the sibling [dorado](https://github.com/nycjv321/dorado)
 project's `web/`; its theming follows the sibling `soroban` site), and is not part of the
-copy-it harness. Build it with `cd web && npm install && npm run build`.
+copy-it harness. Build it with `cd web && npm install && npm run build`. CI builds it on
+every PR that touches `web/`, and a merge to `main` deploys it to `gota.alleato.dev`
+(`.github/workflows/deploy-site.yml`).
 
 ## Changelog
 

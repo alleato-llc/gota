@@ -24,10 +24,20 @@ Keeping all three consistent is the point.
   Dracula, with a warm secondary accent (`--gold`) for badges, counters, the
   comparison table's Python row, and the honesty note.
 - `src/pages/` holds one file per route. `public/` is served as-is, and includes
-  `report.html` — a copy of the generated `examples/report.html`, linked from the "See a
-  live report" section. The report has a MB/s ⇄ ops/sec toggle, so one page shows the
-  same example run in both units (demonstrating the metric-aware report). Regenerate from
-  `examples/` and re-copy; never hand-edit.
+  `report.html`, linked from the "See a live report" section. The report has a MB/s ⇄
+  ops/sec toggle, so one page shows the same example run in both units (demonstrating the
+  metric-aware report).
+
+  **`public/report.html` is generated, not committed.** `scripts/sync-report.mjs` copies
+  `examples/report.html` into it on every `npm run build` / `npm run dev` (npm's
+  `prebuild`/`predev` hooks), and it is gitignored. It used to be a checked-in copy, which
+  drifted — the published page was a run three weeks older than the committed example. So:
+  regenerate under `examples/` (`python3 examples/run.py`, then `report.py`) and the site
+  picks it up; never hand-edit either copy, and never re-add the file to git. The script
+  only copies — it must never *generate* numbers, since a CI machine's hardware varies
+  (the no-fabricated-numbers rule in the root `CLAUDE.md`). A missing
+  `examples/report.html` fails the build loudly rather than shipping a page with a dead
+  link.
 
 There is no in-browser demo (unlike dorado's `web/`): gota is a copy-it
 reference for a measurement protocol, not a runnable artifact, so the page is

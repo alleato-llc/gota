@@ -1,8 +1,31 @@
 name: CI
 
+# The ONE always-running CI workflow: every job below starts on every PR and
+# every push to main, and a paths-filter step (the `changes` job) decides whether
+# it does real work or reports instantly.
+#
+# The gate is the single `ci-passed` job at the bottom: it always runs and is the
+# ONLY check branch protection should require. Each real job stays cheaply
+# SKIPPABLE (dorny/paths-filter + a job-level `if`) so a docs-only PR never spins
+# up nine toolchains; `ci-passed` needs them all with `if: always()` and fails only
+# if one genuinely FAILED (a skipped dependency is a pass). Requiring the
+# individual jobs instead would leave them "Expected" forever on a PR that didn't
+# touch their paths, blocking the merge.
+#
+# The landing page ships separately: deploy-site.yml publishes web/** on pushes to
+# main. Gota releases no binaries, so there is no release workflow.
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# One live run per ref — a newer push cancels the superseded run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Detect which components changed, so each job below runs only when relevant. A
@@ -10,6 +33,7 @@ jobs:
   # template, since they must all conform to the same recipe. A pure docs/changelog
   # change matches nothing and runs no build jobs.
   changes:
+    name: Detect changed components
     runs-on: ubuntu-latest
     outputs:
       python: ${{ steps.filter.outputs.python }}
@@ -22,8 +46,9 @@ jobs:
       ts: ${{ steps.filter.outputs.ts }}
       haskell: ${{ steps.filter.outputs.haskell }}
       core: ${{ steps.filter.outputs.core }}
+      web: ${{ steps.filter.outputs.web }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -65,55 +90,65 @@ jobs:
               - 'report_template.html'
               - 'examples/**'
               - 'tests/**'
+            # The landing page is an independent component — it does not follow
+            # the protocol, so it keys only on its own tree (and this workflow).
+            web:
+              - 'web/**'
+              - '.github/workflows/ci.yml'
 
   # Each language template must build and run standalone and emit one JSON line
   # (the protocol output). The run uses a short warmup/measure to stay fast.
 
   python:
+    name: Python template
     needs: changes
     if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: python3 templates/python/runner.py 65536 0.1 0.2 | grep '"mbps"'
 
   rust:
+    name: Rust template
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - run: cd templates/rust && rustc -O runner.rs -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   c:
+    name: C template
     needs: changes
     if: needs.changes.outputs.c == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: cd templates/c && cc -std=c17 -O2 runner.c gota.c -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   go:
+    name: Go template
     needs: changes
     if: needs.changes.outputs.go == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25"
       - run: cd templates/go && go build -o runner . && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   java:
+    name: Java template
     needs: changes
     if: needs.changes.outputs.java == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -121,44 +156,48 @@ jobs:
       - run: cd templates/java && javac Gota.java Runner.java && java Runner 65536 0.1 0.2 | grep '"mbps"'
 
   swift:
+    name: Swift template
     needs: changes
     if: needs.changes.outputs.swift == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: swift-actions/setup-swift@v2
         with:
           swift-version: "6.0"
       - run: cd templates/swift && swiftc -O Gota.swift runner.swift -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   zig:
+    name: Zig template
     needs: changes
     if: needs.changes.outputs.zig == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v1
         with:
           version: "0.16.0"
       - run: cd templates/zig && zig build-exe runner.zig -O ReleaseFast && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   ts:
+    name: TypeScript template
     needs: changes
     if: needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
       - run: cd templates/ts && node --experimental-strip-types runner.ts 65536 0.1 0.2 | grep '"mbps"'
 
   haskell:
+    name: Haskell template
     needs: changes
     if: needs.changes.outputs.haskell == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: haskell-actions/setup@v2
         with:
           ghc-version: "9.14.1"
@@ -167,11 +206,12 @@ jobs:
   # The orchestrator and report (Python). Syntax-check the modules, confirm the
   # report generates from the committed results.json, and run the example consumer.
   core:
+    name: Core (harness + report + example)
     needs: changes
     if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -179,3 +219,50 @@ jobs:
       - run: python3 -m unittest discover -s tests
       - run: python3 report.py examples/results.json -o /tmp/report.html && grep -q 'const EMBEDDED = {' /tmp/report.html
       - run: python3 examples/python/runner.py 65536 0.1 0.2 | grep '"mbps"'
+
+  # The landing page. Build it here so a broken site fails the PR rather than the
+  # deploy: deploy-site.yml runs `salpa deploy` (which builds web/ again) only
+  # after a merge to main, and by then a compile error is already shipped.
+  # `npm ci` (not install) so the lockfile is the source of truth, matching what
+  # the deploy builds.
+  web:
+    name: Web landing page (build)
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      # `prebuild` copies examples/report.html into public/ first, so this also
+      # proves the showcased report is present and in sync.
+      - run: npm run build
+      - name: Assert the static output exists
+        run: test -s dist/index.html
+
+  # The gate: the ONLY check branch protection should require. It always runs
+  # (cheap) and needs every real job with `if: always()`, so it reports even when
+  # they skipped. It fails only if a dependency genuinely failed or was cancelled
+  # — a skipped dependency (its paths didn't change) is a pass.
+  ci-passed:
+    name: CI passed
+    needs: [changes, python, rust, c, go, java, swift, zig, ts, haskell, core, web]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require no failure among the suites
+        run: |
+          results='${{ join(needs.*.result, ',') }}'
+          echo "dependency results: $results"
+          case "$results" in
+            *failure*|*cancelled*)
+              echo "::error::a CI suite failed or was cancelled"; exit 1;;
+            *) echo "all suites passed or were skipped";;
+          esac

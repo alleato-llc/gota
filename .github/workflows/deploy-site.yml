@@ -1,0 +1,82 @@
+name: Deploy site
+
+# The landing page in web/ deploys to the static host (gota.alleato.dev) on every
+# push to main that TOUCHES web/. If nothing under web/ changed, the path filter
+# means this workflow never starts: no build, no deploy, nothing.
+#
+# Unlike the sibling dorado/soroban sites, gota ships NO binaries and cuts no
+# releases, so there is no `release:` trigger and no build-time download-link
+# resolution — the page is content only.
+#
+# salpa (github.com/alleato-llc/salpa, a private house release tool pulled from
+# ghcr) owns the deploy: `salpa deploy` builds web/ (npm) and syncs web/dist to
+# the site host (S3 + CloudFront, provisioned separately as IaC in
+# nycjv321-infrastructure/projects/gota), then busts the CDN cache — see
+# salpa.yaml at the repo root. No raw aws-cli in this file; salpa shells it
+# internally, parameterized by salpa.yaml.
+#
+# Auth is short-lived OIDC credentials (the gota-github-deploy-role), no stored
+# keys. The CloudFront distribution is found at runtime by its alias (== the
+# bucket/domain), so no distribution id needs wiring here.
+#
+# Required repository config (Settings -> Secrets and variables -> Actions):
+#   AWS_REGION (variable)          region of the deploy role (us-east-1)
+#   AWS_SITE_ROLE_ARN (secret)     arn of gota-github-deploy-role (OIDC) — a
+#     SECRET, not a variable: GitHub auto-redacts secrets everywhere in logs,
+#     which a variable + a manual ::add-mask:: step does NOT do (the step's own
+#     `env:` block still gets echoed in its log preamble before the mask takes
+#     effect — that's a leak, not defense in depth; don't revert this to a
+#     variable no matter how it's masked downstream).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "salpa.yaml"
+      - ".github/workflows/deploy-site.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write # assume the deploy role via OIDC
+  contents: read
+  packages: read # pull salpa from ghcr
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  SALPA_VERSION: "0.1.12" # pinned salpa release on ghcr (bump deliberately)
+
+jobs:
+  deploy:
+    name: Deploy site (salpa)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - uses: oras-project/setup-oras@v1
+
+      - name: Fetch salpa
+        run: |
+          echo "${{ github.token }}" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+          oras pull "ghcr.io/${{ github.repository_owner }}/salpa:${SALPA_VERSION}"
+          chmod +x salpa-linux-amd64
+          sudo mv salpa-linux-amd64 /usr/local/bin/salpa
+
+      - name: Configure deploy credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_SITE_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy
+        run: salpa deploy # npm build web/ -> sync web/dist -> invalidate CloudFront

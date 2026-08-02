@@ -20,6 +20,14 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Added
 
+- **CI: a `ci-passed` gate job.** It always runs, needs every suite with `if: always()`,
+  and fails only if one genuinely failed or was cancelled — a *skipped* job (its paths
+  didn't change) is a pass. This is the single check to require in branch protection;
+  requiring the individual path-filtered jobs leaves them "Expected" forever on a
+  partial-path PR. Adding a language template means adding its job to that `needs:` list.
+- **CI: a `web` job** that builds the landing page (`npm ci && npm run build`, asserting
+  `dist/index.html`), path-filtered on `web/**`, so a broken site fails the PR instead of
+  the deploy. See [`web/CHANGELOG.md`](web/CHANGELOG.md) for the deploy pipeline itself.
 - A ninth language template: **Swift** (`templates/swift/`, see its changelog), wired into
   the example (`examples/swift/`, FNV-1a) and `run.py`. Swift reserves top-level code for
   `main.swift`, so the runner is an `@main struct`; timing uses
@@ -91,6 +99,13 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Changed
 
+- **CI housekeeping**, aligning with soroban: `actions/checkout` pinned to `v5` (was `v4`),
+  every job carries a display `name:`, and the `web` job runs Node 22 (the deploy stays on
+  20, matching the sibling deploys).
+- **CI triggers** now match the sibling soroban repo: `pull_request` plus pushes to `main`
+  (was: every push on every branch, *and* every PR — two runs per commit on a PR branch),
+  with a `concurrency` group so a newer push cancels the superseded run and an explicit
+  `permissions: contents: read`.
 - `harness.run_all` is more robust: a per-runner `timeout=` (default 120s) kills and
   skips a hung runner instead of stalling the whole run, and a malformed JSON line is
   logged and skipped rather than raising and aborting the collection. Both are
