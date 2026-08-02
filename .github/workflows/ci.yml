@@ -21,6 +21,14 @@ on:
 
 permissions:
   contents: read
+  # dorny/paths-filter asks the API for a PULL REQUEST's changed-file list, which
+  # needs this scope; on a push it diffs with git and doesn't. Declaring
+  # `permissions:` at all replaces the token's defaults, so omitting this fails the
+  # `changes` job on every PR with "Resource not accessible by integration" — and
+  # then every real job skips and only the gate goes red. The sibling dorado/soroban
+  # workflows omit it because they are pushed to directly and never hit that path;
+  # do not "align" this away.
+  pull-requests: read
 
 # One live run per ref — a newer push cancels the superseded run.
 concurrency:
