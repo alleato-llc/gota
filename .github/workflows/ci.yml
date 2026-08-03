@@ -102,10 +102,19 @@ jobs:
               - 'report_template.html'
               - 'examples/**'
               - 'tests/**'
+              # tests/test_languages.py asserts the language list agrees across the
+              # manifest, templates/, the docs, run.py, and this workflow — so it has
+              # to run whenever a template or the manifest moves, not only on a core
+              # change.
+              - 'languages.json'
+              - 'templates/**'
             # The landing page is an independent component — it does not follow
             # the protocol, so it keys only on its own tree (and this workflow).
             web:
               - 'web/**'
+              # The page imports the manifest at build time, so a manifest-only change
+              # still changes the page.
+              - 'languages.json'
               - '.github/workflows/ci.yml'
 
   # Each language template must build and run standalone and emit one JSON line

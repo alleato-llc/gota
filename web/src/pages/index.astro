@@ -1,82 +1,26 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import manifest from "../../../languages.json";
 
 // Single source for the repository URL. Must match the actual remote
 // (alleato-llc/gota) — every "view the source" link on the page derives from it.
 const REPO = "https://github.com/alleato-llc/gota";
 const BLOB = `${REPO}/blob/main`;
 
-// The ten language templates. `files` are what you copy; `your` is the seam
-// you edit; everything else stays untouched. Kept in sync with README.md.
-const languages = [
-  {
-    name: "Python",
-    files: "gota.py · runner.py",
-    body: "The orchestrator's own language and the simplest runner. No build step; run it straight.",
-  },
-  {
-    name: "Rust",
-    files: "gota.rs · runner.rs",
-    body: "A single-file rustc build, no Cargo project. Closures plug the op straight in.",
-  },
-  {
-    name: "C",
-    files: "gota.h · gota.c · runner.c",
-    body: "The harness is a header plus one translation unit; the op is a function pointer with a void* ctx.",
-  },
-  {
-    name: "C++",
-    files: "gota.hpp · runner.cpp",
-    body: "Header-only: lambdas mean the op inlines into the timing loop, so no function-pointer indirection is needed. C++20, std::span buffer.",
-  },
-  {
-    name: "Go",
-    files: "go.mod · gota/gota.go · runner.go",
-    body: "A tiny module with the harness in its own package. go build, then run.",
-  },
-  {
-    name: "Java",
-    files: "Gota.java · Runner.java",
-    body: "The op is a functional interface; javac the two files and run Runner.",
-  },
-  {
-    name: "Swift",
-    files: "Gota.swift · runner.swift",
-    body: "The op is a non-escaping closure over an inout [UInt8]. An @main struct, because swiftc reserves top-level code for main.swift.",
-  },
-  {
-    name: "Zig",
-    files: "gota.zig · runner.zig",
-    body: "Targets Zig 0.16 (std.process.Init, std.Io.Clock). Built ReleaseFast.",
-  },
-  {
-    name: "TypeScript",
-    files: "gota.ts · runner.ts",
-    body: "Runs under Node's type stripping (--experimental-strip-types), no transpile step.",
-  },
-  {
-    name: "Haskell",
-    files: "Gota.hs · runner.hs",
-    body: "Lazy and pure; the op threads a forced accumulator so the work can't be deferred or shared. GHC, stdlib only.",
-  },
-];
+// The language templates come from the repo-root languages.json — the ONE list.
+// Adding a language means editing that file; this page needs no change. A unit test
+// (tests/test_languages.py) fails if the manifest and the rest of the repo disagree.
+const languages = manifest.languages;
 
 // Languages as rows: the harness file you copy, the seam you write, and the
-// build-and-run command. Python is tinted because it also hosts the
-// orchestrator (harness.py + run.py). Commands match each template's README.
+// build-and-run command — all from the same manifest. Python is tinted because it
+// also hosts the orchestrator (harness.py + run.py).
 const cmpCols = ["Harness (copy as-is)", "Your op (one seam)", "Build & run"];
-const cmpRows = [
-  { name: "Python", ref: true, cells: ["gota.py", "runner.py", "python3 runner.py 65536 0.2 0.4"] },
-  { name: "Rust", cells: ["gota.rs", "runner.rs", "rustc -O runner.rs -o runner"] },
-  { name: "C", cells: ["gota.h + gota.c", "runner.c", "cc -std=c17 -O2 runner.c gota.c -o runner"] },
-  { name: "C++", cells: ["gota.hpp", "runner.cpp", "c++ -std=c++20 -O2 runner.cpp -o runner"] },
-  { name: "Go", cells: ["gota/gota.go", "runner.go", "go build -o runner ."] },
-  { name: "Java", cells: ["Gota.java", "Runner.java", "javac *.java && java Runner ..."] },
-  { name: "Swift", cells: ["Gota.swift", "runner.swift", "swiftc -O Gota.swift runner.swift -o runner"] },
-  { name: "Zig", cells: ["gota.zig", "runner.zig", "zig build-exe runner.zig -O ReleaseFast"] },
-  { name: "TypeScript", cells: ["gota.ts", "runner.ts", "node --experimental-strip-types runner.ts ..."] },
-  { name: "Haskell", cells: ["Gota.hs", "runner.hs", "ghc -O2 runner.hs -o runner"] },
-];
+const cmpRows = manifest.languages.map((l) => ({
+  name: l.name,
+  ref: l.orchestrator === true,
+  cells: [l.harness, l.seam, l.build],
+}));
 
 // Where gota sits among performance tools. The micro-benchmark row is tinted
 // because that is gota's level; the others are the traditional approaches it is
