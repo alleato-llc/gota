@@ -1,15 +1,16 @@
 {
   "machine": "Apple M4 Max",
   "os": "Darwin arm64",
-  "date": "2026-07-06",
-  "git_commit": "0a65e10",
+  "date": "2026-08-02",
+  "git_commit": "b2fb7fc",
   "toolchains": {
     "rust": "rustc 1.96.1 (31fca3adb 2026-06-26)",
     "c": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+    "cpp": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
     "go": "go version go1.24.5 darwin/arm64",
     "zig": "0.16.0",
     "java": "openjdk version \"25.0.2\" 2026-01-20",
-    "swift": "Apple Swift version 6.3.2 (swiftlang-6.3.2.1.108 clang-2100.1.1.101)",
+    "swift": "Apple Swift version 6.3.3 (swiftlang-6.3.3.1.3 clang-2100.1.1.101)",
     "python": "Python 3.14.2",
     "ts": "v22.17.1",
     "haskell": "9.14.1"
@@ -25,64 +26,71 @@
     {
       "impl": "python",
       "bench": "fnv1a-64",
-      "mbps": 20.52,
-      "mbps_median": 20.3,
-      "iters": 480
+      "mbps": 19.9,
+      "mbps_median": 19.58,
+      "iters": 448
     },
     {
       "impl": "c",
       "bench": "fnv1a-64",
-      "mbps": 1113.37,
-      "mbps_median": 1109.69,
+      "mbps": 1115.52,
+      "mbps_median": 1109.67,
+      "iters": 26624
+    },
+    {
+      "impl": "cpp",
+      "bench": "fnv1a-64",
+      "mbps": 1114.6,
+      "mbps_median": 1111.93,
       "iters": 26624
     },
     {
       "impl": "go",
       "bench": "fnv1a-64",
-      "mbps": 1113.2,
-      "mbps_median": 1110.99,
+      "mbps": 1115.01,
+      "mbps_median": 1110.15,
       "iters": 26624
     },
     {
       "impl": "rust",
       "bench": "fnv1a-64",
-      "mbps": 1113.61,
-      "mbps_median": 1110.57,
+      "mbps": 1114.11,
+      "mbps_median": 1108.11,
       "iters": 26624
     },
     {
       "impl": "zig",
       "bench": "fnv1a-64",
-      "mbps": 1113.49,
-      "mbps_median": 1107.46,
+      "mbps": 1112.41,
+      "mbps_median": 1107.94,
       "iters": 26624
     },
     {
       "impl": "java",
       "bench": "fnv1a-64",
-      "mbps": 1116.07,
-      "mbps_median": 1113.19,
+      "mbps": 1115.22,
+      "mbps_median": 1112.48,
       "iters": 26624
     },
     {
       "impl": "swift",
       "bench": "fnv1a-64",
-      "mbps": 1111.68,
-      "mbps_median": 1106.98,
+      "mbps": 1115.47,
+      "mbps_median": 1110.6,
       "iters": 26624
     },
     {
       "impl": "ts",
       "bench": "fnv1a-64",
-      "mbps": 90.6,
-      "mbps_median": 84.31,
-      "iters": 2048
+      "mbps": 85.56,
+      "mbps_median": 79.8,
+      "iters": 1920
     },
     {
       "impl": "haskell",
       "bench": "fnv1a-64",
-      "mbps": 1112.44,
-      "mbps_median": 1109.21,
+      "mbps": 1112.05,
+      "mbps_median": 1108.23,
       "iters": 26624
     }
   ]
