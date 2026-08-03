@@ -36,6 +36,11 @@ on:
       # regenerated example would sit undeployed until some unrelated web/** change
       # happened to ship it, so the live report would silently lag the repo.
       - "examples/report.html"
+      # Same reason: the page's language cards and build table are derived from the
+      # repo-root manifest at build time. Adding a language changes the page without
+      # touching web/, so without this path the site would keep advertising the old
+      # list -- the exact drift languages.json was introduced to end.
+      - "languages.json"
       - "salpa.yaml"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:

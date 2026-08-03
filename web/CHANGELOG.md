@@ -59,6 +59,10 @@ every component is in [VERSIONS.md](../VERSIONS.md).
   section heading, the badge line, the protocol/report/pitfall paragraphs — from eight to
   ten. The languages array and the build table are hand-maintained here and are not
   derived from `templates/`, so adding a language means editing this file too.
+- The site deploy now also triggers on `languages.json`. The page's language cards and
+  build table are derived from that manifest at build time, so adding a language changes
+  the page without touching `web/` — and without this the site would keep advertising the
+  old list, which is the drift the manifest exists to end.
 - The site deploy now also triggers on `examples/report.html`. The showcased report is
   copied into the page at build time but lives outside `web/`, so a regenerated example
   did not redeploy — the published report could silently lag the repo (it did: `main`
