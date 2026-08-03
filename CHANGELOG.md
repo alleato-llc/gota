@@ -178,6 +178,10 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Fixed
 
+- `harness.py`'s module docstring still described the original four-field JSON line,
+  unchanged since `mbps_median` and then `protocol` were added. Corrected in both the root
+  file and the `examples/` copy — a stale description of the wire format in the
+  orchestrator's own header is the last place it should be wrong.
 - `examples/harness.py` was a stale copy that predated the stream-output refactor (it
   lacked `build_results_doc`/`render_markdown`/stream support). Re-synced it to the root
   `harness.py` so the in-repo consumer reflects the current orchestrator (now including
