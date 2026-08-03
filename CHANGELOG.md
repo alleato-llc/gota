@@ -20,6 +20,16 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Added
 
+- **`languages.json`: one canonical language list.** The landing page imports it directly
+  (cards and the build-command table are derived, not retyped), and
+  `tests/test_languages.py` asserts everything that *cannot* be derived agrees with it:
+  the `templates/`/`examples/` directories, each template's README + CHANGELOG, the
+  README language table, `VERSIONS.md`, `run.py`'s specs/probes/`IMPL_ORDER`, and the CI
+  workflow's filter, job, and `ci-passed` gate entries. A failure names the missing spot.
+  This exists because the page silently lagged the repo twice — Swift in July, C++ in
+  August — with every list checked except the rendered site. `CLAUDE.md` gains the
+  matching "Adding a language" checklist, and the `core` CI filter now includes
+  `templates/**` and `languages.json` so the check runs whenever a language moves.
 - **CI: a `ci-passed` gate job.** It always runs, needs every suite with `if: always()`,
   and fails only if one genuinely failed or was cancelled — a *skipped* job (its paths
   didn't change) is a pass. This is the single check to require in branch protection;

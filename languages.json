@@ -1,0 +1,96 @@
+{
+  "_comment": "Canonical list of gota's language templates. The landing page imports this directly, and tests/test_languages.py asserts the rest of the repo agrees (templates/ dirs, README table, run.py, the CI jobs). Adding a language starts here -- see CLAUDE.md.",
+  "languages": [
+    {
+      "id": "python",
+      "name": "Python",
+      "files": "gota.py · runner.py",
+      "body": "The orchestrator's own language and the simplest runner. No build step; run it straight.",
+      "harness": "gota.py",
+      "seam": "runner.py",
+      "build": "python3 runner.py 65536 0.2 0.4",
+      "orchestrator": true
+    },
+    {
+      "id": "rust",
+      "name": "Rust",
+      "files": "gota.rs · runner.rs",
+      "body": "A single-file rustc build, no Cargo project. Closures plug the op straight in.",
+      "harness": "gota.rs",
+      "seam": "runner.rs",
+      "build": "rustc -O runner.rs -o runner"
+    },
+    {
+      "id": "c",
+      "name": "C",
+      "files": "gota.h · gota.c · runner.c",
+      "body": "The harness is a header plus one translation unit; the op is a function pointer with a void* ctx.",
+      "harness": "gota.h + gota.c",
+      "seam": "runner.c",
+      "build": "cc -std=c17 -O2 runner.c gota.c -o runner"
+    },
+    {
+      "id": "cpp",
+      "name": "C++",
+      "files": "gota.hpp · runner.cpp",
+      "body": "Header-only: lambdas mean the op inlines into the timing loop, so no function-pointer indirection is needed. C++20, std::span buffer.",
+      "harness": "gota.hpp",
+      "seam": "runner.cpp",
+      "build": "c++ -std=c++20 -O2 runner.cpp -o runner"
+    },
+    {
+      "id": "go",
+      "name": "Go",
+      "files": "go.mod · gota/gota.go · runner.go",
+      "body": "A tiny module with the harness in its own package. go build, then run.",
+      "harness": "gota/gota.go",
+      "seam": "runner.go",
+      "build": "go build -o runner ."
+    },
+    {
+      "id": "java",
+      "name": "Java",
+      "files": "Gota.java · Runner.java",
+      "body": "The op is a functional interface; javac the two files and run Runner.",
+      "harness": "Gota.java",
+      "seam": "Runner.java",
+      "build": "javac *.java && java Runner ..."
+    },
+    {
+      "id": "swift",
+      "name": "Swift",
+      "files": "Gota.swift · runner.swift",
+      "body": "The op is a non-escaping closure over an inout [UInt8]. An @main struct, because swiftc reserves top-level code for main.swift.",
+      "harness": "Gota.swift",
+      "seam": "runner.swift",
+      "build": "swiftc -O Gota.swift runner.swift -o runner"
+    },
+    {
+      "id": "zig",
+      "name": "Zig",
+      "files": "gota.zig · runner.zig",
+      "body": "Targets Zig 0.16 (std.process.Init, std.Io.Clock). Built ReleaseFast.",
+      "harness": "gota.zig",
+      "seam": "runner.zig",
+      "build": "zig build-exe runner.zig -O ReleaseFast"
+    },
+    {
+      "id": "ts",
+      "name": "TypeScript",
+      "files": "gota.ts · runner.ts",
+      "body": "Runs under Node's type stripping (--experimental-strip-types), no transpile step.",
+      "harness": "gota.ts",
+      "seam": "runner.ts",
+      "build": "node --experimental-strip-types runner.ts ..."
+    },
+    {
+      "id": "haskell",
+      "name": "Haskell",
+      "files": "Gota.hs · runner.hs",
+      "body": "Lazy and pure; the op threads a forced accumulator so the work can't be deferred or shared. GHC, stdlib only.",
+      "harness": "Gota.hs",
+      "seam": "runner.hs",
+      "build": "ghc -O2 runner.hs -o runner"
+    }
+  ]
+}

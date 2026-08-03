@@ -72,6 +72,33 @@ adding a language (C and Java vary only as far as the language forces: C uses a
 function pointer + `void* ctx`, Java a functional interface, because neither has
 closures — C++, which does have them, is header-only and takes a lambda like Rust).
 
+## Adding a language
+
+The language list lives in **eight** places. `languages.json` at the repo root is the
+canonical one — the landing page imports it directly, so the page can no longer drift —
+and `tests/test_languages.py` fails if any of the rest disagrees, naming the spot. Run
+`python3 -m unittest discover tests` and let it drive you through:
+
+1. **`languages.json`** — id, display name, the `files` line and card `body` for the
+   page, plus `harness`/`seam`/`build` for its build-command row. Start here.
+2. **`templates/<id>/`** — `gota.*` + `runner.*` + `README.md` + `CHANGELOG.md`.
+3. **`examples/<id>/`** — the FNV-1a runner, so the example spans every language.
+4. **`examples/run.py`** — a `prep_<id>` + `RunnerSpec`, a `TOOLCHAINS` probe, and
+   entries in `IMPL_ORDER` / `IMPL_LABELS`.
+5. **`.github/workflows/ci.yml`** — a paths-filter entry, a `changes` output, a job, and
+   the language in `ci-passed`'s `needs:`. All four by hand; Actions needs static YAML.
+   *Forgetting the gate entry is the dangerous one — that job's failures would no longer
+   block a merge.*
+6. **`README.md`** language table, **`VERSIONS.md`** row, and the core `CHANGELOG.md`.
+7. **Regenerate the example artifacts** (`python3 examples/run.py`) on an idle machine so
+   the new language appears in `RESULTS.md`/`results.json`/`report.html` — and remember
+   that is a real benchmark run, so never do it on a loaded box or in CI.
+
+The page needs no edit (step 1 covers it), but it is worth opening: `npm run build` in
+`web/` and look at the rendered page. Swift and C++ each shipped with the repo complete
+and the site silently a language behind, because every check was against the repo and
+nobody looked at the site.
+
 ## Verifying changes
 
 Templates must actually build and run. After touching a `gota.*` or the protocol,
