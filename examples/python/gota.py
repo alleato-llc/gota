@@ -52,7 +52,7 @@ class Bencher:
         n = len(samples)
         median = 0.0 if n == 0 else samples[n // 2] if n % 2 else (samples[n // 2 - 1] + samples[n // 2]) / 2
         print(
-            f'{{"impl":"{self.impl}","bench":"{name}","mbps":{best:.2f},"mbps_median":{median:.2f},"iters":{total}}}',
+            f'{{"impl":"{self.impl}","bench":"{name}","mbps":{best:.2f},"mbps_median":{median:.2f},"iters":{total},"protocol":"1.2.0"}}',
             flush=True,
         )
 

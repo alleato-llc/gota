@@ -10,6 +10,9 @@ version of every component is in [VERSIONS.md](../../VERSIONS.md).
 
 ### Changed
 
+- Synced to protocol **1.2.0** (see the [core changelog](../../CHANGELOG.md)): the
+  JSON line now carries a `protocol` field naming the version the runner implements.
+
 - Synced to the protocol's `mbps_median` addition (see the [core changelog](../../CHANGELOG.md)): `gota.rs` now records each measure-phase
   batch's rate and emits the median beside the peak in its JSON line.
 

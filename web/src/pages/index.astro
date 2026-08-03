@@ -153,7 +153,9 @@ const approachRows = [
             <span>
               {" "}One native runner per language. Copy <code>gota.&lt;lang&gt;</code>
               as-is; it runs the peak-of-batches timing loop and prints one JSON
-              line, <code>{`{"impl","bench","mbps","mbps_median","iters"}`}</code>, per benchmark.
+              line, <code>{`{"impl","bench","mbps","mbps_median","iters","protocol"}`}</code>, per benchmark. The
+              line names the protocol version it implements, so a copy that has fallen
+              behind says so.
             </span>
           </div>
         </div>
@@ -319,7 +321,7 @@ const approachRows = [
         </li>
         <li>
           <b>One JSON line per benchmark</b> on stdout
-          (<code>{`{"impl","bench","mbps","mbps_median","iters"}`}</code>) — the
+          (<code>{`{"impl","bench","mbps","mbps_median","iters","protocol"}`}</code>) — the
           entire wire format between a runner and the orchestrator.
         </li>
         <li>
@@ -329,7 +331,7 @@ const approachRows = [
         </li>
       </ul>
       <p class="sub" style="margin-top: 1.2rem;">
-        The contract carries its own version — currently <b>protocol 1.1.0</b> — so a
+        The contract carries its own version — currently <b>protocol 1.2.0</b> — so a
         project that copied its runners can say which version they implement, and a copy
         that has fallen behind is a fact you can check rather than a guess.
       </p>

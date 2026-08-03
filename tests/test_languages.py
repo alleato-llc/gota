@@ -61,6 +61,85 @@ class TestDirectoriesMatch(unittest.TestCase):
             self.assertTrue((base / "CHANGELOG.md").is_file(), f"{lang_id}: no CHANGELOG.md")
 
 
+class TestProtocolVersion(unittest.TestCase):
+    """The protocol version is hardcoded in twenty harness copies (ten templates, ten
+    example runners), which is a hand-maintained constant of exactly the kind that goes
+    stale. It is worth it because a CONSUMER's copy reporting an old version is the
+    signal the field exists for -- but inside this repo it must never drift, so it is
+    checked here against VERSIONS.md and PROTOCOL.md."""
+
+    @staticmethod
+    def _declared_version():
+        text = (ROOT / "VERSIONS.md").read_text()
+        match = re.search(r"^\| Protocol \| ([0-9]+\.[0-9]+\.[0-9]+) \|", text, re.MULTILINE)
+        assert match, "VERSIONS.md: no Protocol row"
+        return match.group(1)
+
+    def test_spec_states_the_same_version(self):
+        version = self._declared_version()
+        spec = (ROOT / "PROTOCOL.md").read_text()
+        self.assertIn(
+            f"**Protocol version {version}.**",
+            spec,
+            f"PROTOCOL.md does not announce {version} (VERSIONS.md says it should)",
+        )
+
+    def test_harness_implements_the_same_version(self):
+        version = self._declared_version()
+        harness = (ROOT / "harness.py").read_text()
+        self.assertIn(
+            f'PROTOCOL_VERSION = "{version}"',
+            harness,
+            f"harness.py PROTOCOL_VERSION is not {version}",
+        )
+
+    def test_every_harness_copy_emits_the_current_version(self):
+        """Found by CONTENT, not filename: the harness is `gota.c`, `Gota.java`,
+        `gota/gota.go`..., and the tree also holds `gota.h` (no emit) plus gitignored
+        build artifacts. The emitting file is the one carrying the JSON line."""
+        version = self._declared_version()
+        # Compiled runners, .pyc caches, and .o/.hi artifacts sit beside the sources
+        # (gitignored, but this walks the filesystem). Rather than maintain a blocklist,
+        # skip anything that is not UTF-8 text: source is, build output is not.
+        for base in ("templates", "examples"):
+            for lang_id in IDS:
+                emitters = []
+                for path in (ROOT / base / lang_id).rglob("*"):
+                    if not path.is_file() or path.suffix == ".md":
+                        continue
+                    try:
+                        text = path.read_bytes().decode("utf-8")
+                    except UnicodeDecodeError:
+                        continue
+                    if "mbps_median" in text and "iters" in text:
+                        emitters.append((path, text))
+                self.assertTrue(
+                    emitters, f"{base}/{lang_id}: no file emits the protocol JSON line"
+                )
+                for path, text in emitters:
+                    self.assertIn(
+                        version,
+                        text,
+                        f"{path.relative_to(ROOT)}: does not emit protocol {version}",
+                    )
+
+
+class TestVendoredCopies(unittest.TestCase):
+    """`examples/` is a self-contained consumer, so it carries its own copy of
+    `harness.py` -- the same copy-don't-depend model gota advocates. That copy silently
+    went stale the moment the root gained protocol-version handling, so pin it."""
+
+    def test_example_harness_matches_the_root(self):
+        root = (ROOT / "harness.py").read_bytes()
+        vendored = (ROOT / "examples" / "harness.py").read_bytes()
+        self.assertEqual(
+            root,
+            vendored,
+            "examples/harness.py has drifted from harness.py -- re-copy it "
+            "(`cp harness.py examples/harness.py`)",
+        )
+
+
 class TestDocsMatch(unittest.TestCase):
     def test_readme_language_table(self):
         text = (ROOT / "README.md").read_text()

@@ -1,6 +1,6 @@
 # The Gota protocol
 
-**Protocol version 1.1.0.** This is the normative contract: what a runner must do to be
+**Protocol version 1.2.0.** This is the normative contract: what a runner must do to be
 comparable with every other runner. It is deliberately short. The reasoning behind each
 requirement — why batches, why the peak, why a warmup — is in
 [`docs/DESIGN.md`](docs/DESIGN.md), which is the more interesting document and the one to
@@ -30,7 +30,7 @@ benchmark in the run. It MUST NOT reallocate per iteration.
 2.1. A runner MUST print exactly one JSON object per benchmark, one per line, to stdout:
 
 ```json
-{"impl":"<name>","bench":"<name>","mbps":<float>,"mbps_median":<float>,"iters":<int>}
+{"impl":"<name>","bench":"<name>","mbps":<float>,"mbps_median":<float>,"iters":<int>,"protocol":"1.2.0"}
 ```
 
 2.2. Field meanings:
@@ -42,12 +42,18 @@ benchmark in the run. It MUST NOT reallocate per iteration.
 | `mbps` | the **peak** per-batch rate, decimal MB/s (1e6 bytes) |
 | `mbps_median` | the **median** of the per-batch rates in the measure phase |
 | `iters` | total iterations run in the measure phase |
+| `protocol` | the protocol version this runner implements (added in 1.2.0) |
 
 2.3. `mbps` and `mbps_median` MUST be computed as
 `buffer_bytes * batch / 1e6 / batch_seconds` per batch. The gap between them is the
 run's stability signal: close means clean, wide means the peak is noisy.
 
-2.4. Nothing else may go to stdout. Diagnostics go to stderr. The orchestrator skips a
+2.4. `protocol` states the version of this document that the runner implements. A
+consumer whose copied runners report an older version than the orchestrator is behind,
+which is the point of the field. Parsers MUST treat it as OPTIONAL: a runner copied
+before 1.2.0 omits it entirely and remains valid, reported as "unspecified".
+
+2.5. Nothing else may go to stdout. Diagnostics go to stderr. The orchestrator skips a
 line it cannot parse rather than aborting, but a conforming runner emits none.
 
 ## 3. The measurement
@@ -88,7 +94,8 @@ timed operation.
 A new language template is conforming when all of these hold:
 
 - [ ] Runs standalone with no arguments, and with all three.
-- [ ] Prints one JSON line per benchmark, with all five fields, and nothing else on stdout.
+- [ ] Prints one JSON line per benchmark, with all six fields (including `protocol`),
+      and nothing else on stdout.
 - [ ] Warms up, then grows a batch to ≥ 100ms, then measures for the requested duration.
 - [ ] Reads a monotonic clock only at batch boundaries.
 - [ ] Reports the peak rate and the median of per-batch rates.
@@ -123,8 +130,8 @@ implement, so a stale copy is a visible fact rather than a guess.
 
 - **MAJOR** — a change that makes existing runners non-comparable or unparseable (new
   arguments, a changed timing loop, a removed or redefined JSON field).
-- **MINOR** — a backward-compatible addition (a new JSON field, as `mbps_median` was
-  in 1.1.0).
+- **MINOR** — a backward-compatible addition (a new JSON field, as `mbps_median` was in
+  1.1.0 and `protocol` in 1.2.0).
 - **PATCH** — clarification with no behavioral change.
 
 A protocol change must land in all ten `templates/<lang>/gota.*` in the same PR, or they

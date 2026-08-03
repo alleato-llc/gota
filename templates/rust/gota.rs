@@ -61,7 +61,7 @@ impl Bencher {
             (samples[n / 2 - 1] + samples[n / 2]) / 2.0
         };
         println!(
-            "{{\"impl\":\"{}\",\"bench\":\"{}\",\"mbps\":{:.2},\"mbps_median\":{:.2},\"iters\":{}}}",
+            "{{\"impl\":\"{}\",\"bench\":\"{}\",\"mbps\":{:.2},\"mbps_median\":{:.2},\"iters\":{},\"protocol\":\"1.2.0\"}}",
             self.impl_name, name, best, median, total
         );
     }

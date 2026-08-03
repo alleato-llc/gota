@@ -10,17 +10,17 @@ tight scalar loop, nothing more (the TypeScript runner uses BigInt for 64-bit ma
 which is genuinely slow — an honest artifact, not a bug; the Haskell runner threads and
 forces an accumulator so laziness cannot defer or share the work).
 
-Machine: Apple M4 Max | Darwin arm64 | 2026-08-02 | commit b2fb7fc.
+Machine: Apple M4 Max | Darwin arm64 | 2026-08-03 | commit 94665dc.
 
 | Implementation | FNV-1a 64 |
 | --- | ---: |
-| Rust | 1114.1 |
-| C | 1115.5 |
-| C++ | 1114.6 |
-| Go | 1115.0 |
-| Zig | 1112.4 |
-| Java | 1115.2 |
-| Swift | 1115.5 |
-| Haskell | 1112.0 |
-| Python | 19.9 |
-| TypeScript | 85.6 |
+| Rust | 1089.0 |
+| C | 1086.5 |
+| C++ | 1087.2 |
+| Go | 1083.2 |
+| Zig | 1084.3 |
+| Java | 1085.3 |
+| Swift | 1085.6 |
+| Haskell | 1068.7 |
+| Python | 19.0 |
+| TypeScript | 86.5 |

@@ -63,7 +63,7 @@ pub const Bencher = struct {
         }
         std.mem.sort(f64, sbuf[0..nsamp], {}, std.sort.asc(f64));
         const median: f64 = if (nsamp == 0) 0.0 else if (nsamp % 2 == 1) sbuf[nsamp / 2] else (sbuf[nsamp / 2 - 1] + sbuf[nsamp / 2]) / 2.0;
-        try self.w.print("{{\"impl\":\"{s}\",\"bench\":\"{s}\",\"mbps\":{d:.2},\"mbps_median\":{d:.2},\"iters\":{d}}}\n", .{ self.impl, name, best, median, total });
+        try self.w.print("{{\"impl\":\"{s}\",\"bench\":\"{s}\",\"mbps\":{d:.2},\"mbps_median\":{d:.2},\"iters\":{d},\"protocol\":\"1.2.0\"}}\n", .{ self.impl, name, best, median, total });
     }
 };
 

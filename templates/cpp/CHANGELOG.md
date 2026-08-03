@@ -6,6 +6,13 @@ Changes to **this language template only** (`templates/cpp/gota.hpp`, `runner.cp
 them. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The current
 version of every component is in [VERSIONS.md](../../VERSIONS.md).
 
+## [Unreleased]
+
+### Changed
+
+- Synced to protocol **1.2.0** (see the [core changelog](../../CHANGELOG.md)): the
+  JSON line now carries a `protocol` field naming the version the runner implements.
+
 ## [0.1.0]
 
 ### Added

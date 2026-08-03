@@ -5,7 +5,7 @@ A small, copy-it reference for **cross-language throughput micro-benchmarks**.
 When you have the same operation implemented in several languages and want an honest,
 *comparable* picture of how fast each implementation's own code runs, Gota gives you:
 
-- **A protocol** (see [`PROTOCOL.md`](PROTOCOL.md), currently version 1.1.0) every runner
+- **A protocol** (see [`PROTOCOL.md`](PROTOCOL.md), currently version 1.2.0) every runner
   follows, so the numbers compare even though each runner is native to its language. The
   spec is short; the reasoning behind it is in [`docs/DESIGN.md`](docs/DESIGN.md).
 - **A generic orchestrator** ([`harness.py`](harness.py)) that builds and runs your
@@ -33,7 +33,7 @@ data flow; what you copy versus what you write is marked.
 ```
    ┌─ PROTOCOL.md ─ the contract every runner and the orchestrator agree on ─┐
    │   in  (argv):   <buffer_bytes> <warmup_s> <measure_s>                    │
-   │   out (stdout): {"impl","bench","mbps","mbps_median","iters"}  per bench │
+   │   out (stdout): {"impl","bench","mbps","mbps_median","iters","protocol"} │
    └─────────────────────────────────────────────────────────────────────────┘
 
    1. MEASURE — native code, one runner per language
@@ -215,7 +215,7 @@ Nothing here is a closed pipeline; pick the layer that fits and route the rest i
 your own systems (CI, a dashboard, a database, a PR comment):
 
 - **Just the numbers.** `harness.run_all(specs, buf, warmup, measure)` returns a plain
-  `list[dict]` (`{"impl","bench","mbps","mbps_median","iters"}` — `mbps` is the peak,
+  `list[dict]` (`{"impl","bench","mbps","mbps_median","iters","protocol"}` — `mbps` is the peak,
   `mbps_median` the median of the per-batch rates as a stability signal). It takes an
   optional `timeout=` per runner. Do whatever you want with it; ignore the rest.
 - **The JSON document.** `harness.build_results_doc(rows, params=, meta=, units=, metric=)`

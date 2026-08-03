@@ -68,7 +68,7 @@ public final class Gota {
         int n = samples.size();
         double median = n == 0 ? 0.0
                 : (n % 2 == 1 ? samples.get(n / 2) : (samples.get(n / 2 - 1) + samples.get(n / 2)) / 2);
-        System.out.printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%d}%n", impl, name, best, median, total);
+        System.out.printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%d,\"protocol\":\"1.2.0\"}%n", impl, name, best, median, total);
     }
 
     public static void run(String impl, String[] args, Register reg) {
