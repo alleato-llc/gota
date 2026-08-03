@@ -22,10 +22,10 @@ const cmpRows = manifest.languages.map((l) => ({
   cells: [l.harness, l.seam, l.build],
 }));
 
-// Where gota sits among performance tools. The micro-benchmark row is tinted
-// because that is gota's level; the others are the traditional approaches it is
-// often confused with. Each answers a different question.
-const approachCols = ["What it measures", "The question it answers", "Example tools"];
+// Where gota sits among performance approaches. The micro-benchmark row is tinted
+// because that is gota's level; the others answer different questions. This is a
+// definition, not a comparison: no tools are named, gota's or anyone else's.
+const approachCols = ["What it measures", "The question it answers"];
 const approachRows = [
   {
     name: "Micro-benchmark",
@@ -33,7 +33,6 @@ const approachRows = [
     cells: [
       "One small operation, in isolation, looped",
       "How fast is this specific code path?",
-      "gota; also criterion, JMH, Google Benchmark",
     ],
   },
   {
@@ -41,7 +40,6 @@ const approachRows = [
     cells: [
       "A whole program under a realistic workload",
       "How fast is the system, end to end?",
-      "wrk, JMeter, k6, load tests",
     ],
   },
   {
@@ -49,7 +47,6 @@ const approachRows = [
     cells: [
       "A real run, sampled to find hot spots",
       "Where is the time actually spent?",
-      "perf, Instruments, flame graphs",
     ],
   },
 ];
@@ -121,21 +118,19 @@ const approachRows = [
         profiler tells you where to look. gota lives in the first row.
       </p>
       <p class="sub" style="margin-top: 1.2rem;">
-        gota sits in that first row alongside criterion, JMH, and Google
-        Benchmark, but it is a different kind of thing. Each of those is one
-        language and a dependency you install — criterion in Rust, JMH in Java,
-        Google Benchmark in C++. gota is the opposite: one ~20-line protocol you
-        copy, not a package you depend on, spanning all ten languages so their
-        results land in the same table. The numbers compare <em>across</em>
-        languages, which a single-language harness cannot do.
+        gota lives in the first row, with one distinguishing property: the same
+        operation is measured the same way in ten languages, so the results land in
+        one table and compare <em>across</em> languages. What you copy is a ~20-line
+        protocol rather than a package you install, which is what lets every runner
+        stay native to its own language.
       </p>
       <div class="note" style="margin-top: 1.5rem;">
         <b>One more axis: throughput, not latency.</b> Even within
         micro-benchmarking, gota measures <em>throughput</em> — the peak rate
         (MB/s) a loop sustains, the unimpeded speed, which is what you want for
-        comparing implementations. For the <em>latency</em> distribution of a
-        single call (mean, p99, outlier rejection) reach for criterion or JMH;
-        for whole-program performance, a macro benchmark. gota answers a narrower
+        comparing implementations. Per-call latency and its distribution (mean, p99,
+        outlier rejection) is a different measurement, and batching deliberately
+        discards the per-call overhead it would need. gota answers a narrower
         question on purpose, and the <a href="#protocol">protocol</a> below is how
         it keeps that one answer honest and comparable.
       </div>
@@ -261,6 +256,46 @@ const approachRows = [
     </div>
   </section>
 
+  <section id="use">
+    <div class="wrap">
+      <h2>What you can do with the output</h2>
+      <p class="sub">
+        Nothing here is a closed pipeline. Each layer hands you a plain artifact, so you
+        can stop at the one you need and route the rest into your own systems.
+      </p>
+      <ul class="checks">
+        <li>
+          <b>Just the numbers.</b> <code>run_all()</code> returns a plain list of dicts,
+          one per benchmark, with a per-runner <code>timeout=</code> so a hung runner is
+          killed and skipped instead of stalling the whole run.
+        </li>
+        <li>
+          <b>Compare against a baseline.</b> Point the report at two or more
+          <code>results.json</code> files for a per-cell delta table. A change inside the
+          noise band (±2% by default) is not flagged, and comparing across different
+          machines or parameters is called out as a warning rather than shown as a
+          meaningful delta.
+        </li>
+        <li>
+          <b>Gate CI on it.</b> <code>--fail-on-regression PCT</code> exits non-zero when
+          any cell drops more than <code>PCT</code>% below baseline;
+          <code>--markdown</code> emits the same comparison as a table for a PR comment.
+        </li>
+        <li>
+          <b>Send it anywhere.</b> Outputs accept a path <em>or</em> any writable stream,
+          so results can go to a file, to stdout, into memory, or straight to an HTTP
+          body without touching disk.
+        </li>
+        <li>
+          <b>Measure something other than bytes.</b> A run records the <em>kind</em> of
+          quantity it measured — byte throughput, operation throughput, latency — apart
+          from the free-text unit label, so the report headlines the right number and a
+          comparison refuses to pit different kinds against each other.
+        </li>
+      </ul>
+    </div>
+  </section>
+
   <section id="protocol">
     <div class="wrap">
       <h2>The protocol is the product</h2>
@@ -293,8 +328,14 @@ const approachRows = [
           <code>PROTOCOL.md</code>, or they stop being comparable.
         </li>
       </ul>
+      <p class="sub" style="margin-top: 1.2rem;">
+        The contract carries its own version — currently <b>protocol 1.1.0</b> — so a
+        project that copied its runners can say which version they implement, and a copy
+        that has fallen behind is a fact you can check rather than a guess.
+      </p>
       <div class="cta" style="justify-content: flex-start; margin-top: 1.5rem;">
-        <a class="btn ghost" href={`${BLOB}/PROTOCOL.md`}>Read PROTOCOL.md</a>
+        <a class="btn ghost" href={`${BLOB}/PROTOCOL.md`}>Read the spec</a>
+        <a class="btn ghost" href={`${BLOB}/docs/DESIGN.md`}>Why it is shaped this way</a>
       </div>
     </div>
   </section>
@@ -313,9 +354,10 @@ const approachRows = [
           <div>
             <b>Compiled languages — dead-code elimination.</b>
             <span>
-              {" "}In C, Rust, Go, and Zig a result that is never read can be optimized
-              away under <code>-O2</code>. Each runner consumes its op's result through a
-              one-byte sink, so the work has to survive.
+              {" "}In any optimizing compiler a result that is never read can be deleted
+              outright, so the loop measures an empty loop at full speed. Every runner
+              consumes its op's result through a one-byte sink, so the work has to
+              survive.
             </span>
           </div>
         </div>
@@ -363,10 +405,10 @@ const approachRows = [
         (whose hardware varies) are never committed.
       </div>
       <p class="sub" style="margin-top: 1.5rem;">
-        It is also deliberately not some things: not a nanosecond-latency tool
-        (use criterion or JMH for that), and not lab-grade absolute numbers (for
-        those you would pin cores and lock frequency on a dedicated box). It is a
-        comparable picture, drop by drop.
+        And it is deliberately narrow: it reports sustained throughput, not
+        nanosecond latency distributions, and not lab-grade absolute numbers — those
+        would want pinned cores and a locked clock on a dedicated box. What it gives
+        you is a comparable picture, drop by drop.
       </p>
     </div>
   </section>

@@ -13,9 +13,15 @@ working *on* Gota.
 
 ## Layout
 
-- `PROTOCOL.md` — the contract every runner obeys and the reasoning behind it
-  (peak-of-batches, read the clock at batch boundaries, warm up JITs, what is in and
-  out of scope). This is the real product; the code is almost incidental.
+- `PROTOCOL.md` — the **normative** contract every runner obeys: invocation, the JSON
+  line, the four measurement steps, a conformance checklist, and the honesty rules. It
+  carries its own semantic version (currently **1.1.0**, tracked in `VERSIONS.md`), so a
+  consumer can state which protocol its copied runners implement and a stale copy is a
+  checkable fact. This is the real product; the code is almost incidental.
+- `docs/DESIGN.md` — the reasoning behind every requirement in `PROTOCOL.md`: why batches,
+  why exponential search, why the peak rather than the mean, why the median alongside it,
+  why a warmup, why the sink. The spec is short because this exists; when a requirement
+  needs justifying, justify it here and keep the spec terse.
 - `harness.py` — the generic orchestrator. `RunnerSpec` + `run_all` (build and run each
   runner as a subprocess under identical params with a per-runner `timeout`, collect their
   JSON, skipping a malformed line rather than aborting), `gather_metadata`
@@ -63,7 +69,10 @@ Every `templates/<lang>/gota.*` implements the **same** protocol: same three CLI
 same peak-of-batches loop (warm up, grow a batch to >= 100ms, then report the fastest
 batch's MB/s), same JSON line `{"impl","bench","mbps","mbps_median","iters"}`. If you change the
 protocol or the timing loop, change it in **all ten** language templates and in
-`PROTOCOL.md`, or they stop being comparable. This is the same discipline a multi-port
+`PROTOCOL.md`, or they stop being comparable. A protocol change also **bumps the Protocol
+version** in `VERSIONS.md` (MAJOR if runners stop being comparable or parseable, MINOR for
+a backward-compatible addition like `mbps_median`), and the rationale goes in
+`docs/DESIGN.md`, not in the spec. This is the same discipline a multi-port
 project uses to keep ports in sync; here the "ports" are the harness templates.
 
 The seam is also uniform on purpose: `run(impl, register)` hands the user a bencher and
