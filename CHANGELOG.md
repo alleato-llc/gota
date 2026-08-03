@@ -20,6 +20,17 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Added
 
+- **The protocol is now a versioned spec.** `PROTOCOL.md` is rewritten as the normative
+  contract (numbered requirements, the exact JSON line, a conformance checklist for a new
+  language template, and the honesty rules) and carries **Protocol 1.1.0**, a semantic
+  version of its own in `VERSIONS.md`. The reasoning it used to carry moves to the new
+  `docs/DESIGN.md` — the core batching idea, exponential batch sizing, why peak rather
+  than mean, why the median alongside it, the warmup, the sink discipline, and scope.
+  `PROTOCOL.md` keeps its name and path, so every template header comment, README link,
+  and consumer reference still resolves. The version is the point: copied runners
+  implement a protocol version, so a consumer that has fallen behind (the sibling dorado
+  `bench/` still emits the pre-`mbps_median` four-field line) is a checkable fact rather
+  than folklore.
 - **`languages.json`: one canonical language list.** The landing page imports it directly
   (cards and the build-command table are derived, not retyped), and
   `tests/test_languages.py` asserts everything that *cannot* be derived agrees with it:

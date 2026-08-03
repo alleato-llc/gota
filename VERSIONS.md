@@ -6,6 +6,13 @@ its own [semantic version](https://semver.org/) and its own changelog; this tabl
 index. A change is recorded in the changelog of whatever it touches — see the routing
 rule in [CLAUDE.md](CLAUDE.md) and the summary in [`README.md`](README.md#changelog).
 
+The **Protocol** row is the contract in [`PROTOCOL.md`](PROTOCOL.md), versioned separately
+from the code that implements it. It is the number a consumer quotes: copied runners
+implement a protocol version, and when this row moves ahead of what a consumer copied,
+that consumer is behind in a way anyone can check. `1.1.0` is the current contract
+(`1.1.0` added `mbps_median` to the JSON line; `1.0.0` was the original four-field line).
+Its rationale lives in [`docs/DESIGN.md`](docs/DESIGN.md).
+
 The **Core** row covers the cross-cutting pieces — the protocol, the orchestrator
 (`harness.py`), and the report (`report.py` + `report_template.html`) plus the
 `examples/` consumer, the `tests/` suite, and shared docs. A protocol-level change bumps
@@ -13,6 +20,7 @@ Core and is then referenced from each language template's changelog as it syncs.
 
 | Component | Version | Changelog | Covers |
 | --- | --- | --- | --- |
+| Protocol | 1.1.0 | [CHANGELOG.md](CHANGELOG.md) | `PROTOCOL.md` (the runner contract) |
 | Core | 0.1.0 | [CHANGELOG.md](CHANGELOG.md) | `PROTOCOL.md`, `harness.py`, `report.py`, `report_template.html`, `examples/`, `tests/`, shared docs |
 | Python template | 0.1.0 | [templates/python/CHANGELOG.md](templates/python/CHANGELOG.md) | `templates/python/` |
 | Rust template | 0.1.0 | [templates/rust/CHANGELOG.md](templates/rust/CHANGELOG.md) | `templates/rust/` |
@@ -33,9 +41,10 @@ component independently from there.
 
 ## Versioning rules
 
-- **MAJOR** — a breaking change. For Core, a protocol change that makes runners no
-  longer comparable (new CLI args, a changed timing loop or JSON shape). For a template,
-  a change to the copy-as-is `gota.*` contract that a consumer must adapt to.
+- **MAJOR** — a breaking change. For the Protocol, a change that makes existing runners
+  non-comparable or unparseable (new CLI args, a changed timing loop, a removed or
+  redefined JSON field). For a template, a change to the copy-as-is `gota.*` contract that
+  a consumer must adapt to.
 - **MINOR** — backward-compatible additions (a new harness/report capability, a new
   language feature in a template).
 - **PATCH** — fixes and doc-only changes that do not alter behavior or contract.

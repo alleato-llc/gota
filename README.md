@@ -5,8 +5,9 @@ A small, copy-it reference for **cross-language throughput micro-benchmarks**.
 When you have the same operation implemented in several languages and want an honest,
 *comparable* picture of how fast each implementation's own code runs, Gota gives you:
 
-- **A protocol** (see [`PROTOCOL.md`](PROTOCOL.md)) every runner follows, so the
-  numbers compare even though each runner is native to its language.
+- **A protocol** (see [`PROTOCOL.md`](PROTOCOL.md), currently version 1.1.0) every runner
+  follows, so the numbers compare even though each runner is native to its language. The
+  spec is short; the reasoning behind it is in [`docs/DESIGN.md`](docs/DESIGN.md).
 - **A generic orchestrator** ([`harness.py`](harness.py)) that builds and runs your
   runners with identical parameters, collects their JSON, records provenance, and
   writes `results.json` + a Markdown table.

@@ -10,6 +10,15 @@ every component is in [VERSIONS.md](../VERSIONS.md).
 
 ### Added
 
+- A "What you can do with the output" section covering capabilities the page never
+  mentioned despite them shipping: the per-runner timeout, baseline comparison with its
+  noise band, `--fail-on-regression` as a CI gate, `--markdown` delta tables for PR
+  comments, streaming outputs to any writable sink, and metric kinds. This is the
+  replacement for the deleted comparison copy: what gota does, rather than what it is not.
+- The protocol section now states the protocol version (1.1.0) and links the new
+  `docs/DESIGN.md` beside the spec.
+
+
 - **A deploy pipeline for the page.** `.github/workflows/deploy-site.yml` publishes `web/`
   to **gota.alleato.dev** on pushes to `main` that touch `web/` (plus `workflow_dispatch`),
   via `salpa deploy` (pinned from ghcr) configured by the new root `salpa.yaml`: npm build,
@@ -42,6 +51,17 @@ every component is in [VERSIONS.md](../VERSIONS.md).
   the reason Haskell's seam threads-and-forces an accumulator.
 
 ### Changed
+
+- **Less self-promoting copy.** Removed the paragraph positioning gota against criterion,
+  JMH, and Google Benchmark ("gota is the opposite"), dropped the "Example tools" column
+  from the approaches table, and rewrote the two "reach for criterion or JMH" pointers as
+  plain statements of what gota measures. No competitor is named anywhere on the page now;
+  the micro/macro/profiling table stays, since defining what a micro-benchmark *is* is
+  framing rather than comparison.
+- The dead-code-elimination card no longer hand-lists "C, Rust, Go, and Zig" (written
+  before C++ and Swift existed). It describes optimizing compilers generally, so it cannot
+  go stale on language eleven.
+
 
 - Reflect the latest protocol/orchestrator changes: the JSON line now reads
   `{"impl","bench","mbps","mbps_median","iters"}` (Measure card + protocol
