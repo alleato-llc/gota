@@ -34,7 +34,8 @@ working *on* Gota.
   - `runner.*` (and `Runner.java`) is the **user's code**: it plugs an operation into
     the harness through one seam (`run(impl, register)` then `bench(name, op)`). The
     committed op is a trivial example to keep the template runnable.
-  - Languages: `python`, `rust`, `c`, `go`, `java`, `zig`, `ts`, `haskell`.
+  - Languages: `python`, `rust`, `c`, `cpp`, `go`, `java`, `swift`, `zig`, `ts`,
+    `haskell`.
 - `report.py` + `report_template.html` — a generic HTML report. The script fills three
   tokens (`__TITLE__`, `__DATA__`, `__GENERATED__`) into the template and writes a
   self-contained, format-aware viewer (file picker, sortable table, per-language
@@ -42,7 +43,7 @@ working *on* Gota.
   `--baseline`) to get a comparison report; `--markdown` and `--fail-on-regression`
   turn the same comparison into a stdout delta table and a CI exit-code gate.
   Presentation lives in the template; the script does not change when you restyle.
-- `examples/` — a complete miniature consumer (Rust, C, Go, Python) driven by a copy of
+- `examples/` — a complete miniature consumer (every language above) driven by a copy of
   `harness.py` and an `examples/run.py`, producing a generated `RESULTS.md`,
   `results.json`, and `report.html`. FNV-1a is the stand-in op.
 - `web/` — the marketing landing page that advertises Gota: a static Astro 5 + Preact
@@ -61,7 +62,7 @@ working *on* Gota.
 Every `templates/<lang>/gota.*` implements the **same** protocol: same three CLI args,
 same peak-of-batches loop (warm up, grow a batch to >= 100ms, then report the fastest
 batch's MB/s), same JSON line `{"impl","bench","mbps","mbps_median","iters"}`. If you change the
-protocol or the timing loop, change it in **all eight** language templates and in
+protocol or the timing loop, change it in **all ten** language templates and in
 `PROTOCOL.md`, or they stop being comparable. This is the same discipline a multi-port
 project uses to keep ports in sync; here the "ports" are the harness templates.
 
@@ -69,7 +70,7 @@ The seam is also uniform on purpose: `run(impl, register)` hands the user a benc
 a buffer, and `bench(name, op)` is called once per operation. Keep that shape when
 adding a language (C and Java vary only as far as the language forces: C uses a
 function pointer + `void* ctx`, Java a functional interface, because neither has
-closures).
+closures — C++, which does have them, is header-only and takes a lambda like Rust).
 
 ## Verifying changes
 
@@ -81,8 +82,10 @@ README.md`), for example:
 python3 templates/python/runner.py 65536 0.2 0.4
 ( cd templates/rust && rustc -O runner.rs -o runner && ./runner 65536 0.2 0.4 && rm runner )
 ( cd templates/c    && cc -std=c17 -O2 runner.c gota.c -o runner && ./runner 65536 0.2 0.4 && rm runner )
+( cd templates/cpp  && c++ -std=c++20 -O2 runner.cpp -o runner && ./runner 65536 0.2 0.4 && rm runner )
 ( cd templates/go   && go build -o runner . && ./runner 65536 0.2 0.4 && rm runner )
 ( cd templates/java && javac Gota.java Runner.java && java Runner 65536 0.2 0.4 && rm *.class )
+( cd templates/swift && swiftc -O Gota.swift runner.swift -o runner && ./runner 65536 0.2 0.4 && rm runner )
 ( cd templates/zig  && zig build-exe runner.zig -O ReleaseFast && ./runner 65536 0.2 0.4 && rm runner runner.zig.o )
 node --experimental-strip-types templates/ts/runner.ts 65536 0.2 0.4   # or: npx tsx
 ( cd templates/haskell && ghc -O2 runner.hs -o runner && ./runner 65536 0.2 0.4 && rm -f runner *.hi *.o )

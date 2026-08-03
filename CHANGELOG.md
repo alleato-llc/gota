@@ -28,6 +28,13 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 - **CI: a `web` job** that builds the landing page (`npm ci && npm run build`, asserting
   `dist/index.html`), path-filtered on `web/**`, so a broken site fails the PR instead of
   the deploy. See [`web/CHANGELOG.md`](web/CHANGELOG.md) for the deploy pipeline itself.
+- A tenth language template: **C++** (`templates/cpp/`, see its changelog), wired into the
+  example (`examples/cpp/`, FNV-1a) and `run.py`. It is header-only: C++ has lambdas, so
+  `bench` is a template and the op inlines into the timing loop (the seam Rust's
+  `impl FnMut()` gives), and the function-pointer + `void* ctx` indirection the C template
+  needs has no counterpart. Buffer is a `std::span<std::uint8_t>`, timing is
+  `std::chrono::steady_clock`, build is `c++ -std=c++20 -O2`. A `cpp` CI job builds and
+  smoke-runs it.
 - A ninth language template: **Swift** (`templates/swift/`, see its changelog), wired into
   the example (`examples/swift/`, FNV-1a) and `run.py`. Swift reserves top-level code for
   `main.swift`, so the runner is an `@main struct`; timing uses

@@ -47,6 +47,7 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       rust: ${{ steps.filter.outputs.rust }}
       c: ${{ steps.filter.outputs.c }}
+      cpp: ${{ steps.filter.outputs.cpp }}
       go: ${{ steps.filter.outputs.go }}
       java: ${{ steps.filter.outputs.java }}
       swift: ${{ steps.filter.outputs.swift }}
@@ -73,6 +74,9 @@ jobs:
             c:
               - *protocol
               - 'templates/c/**'
+            cpp:
+              - *protocol
+              - 'templates/cpp/**'
             go:
               - *protocol
               - 'templates/go/**'
@@ -137,6 +141,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: cd templates/c && cc -std=c17 -O2 runner.c gota.c -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
+
+  cpp:
+    name: C++ template
+    needs: changes
+    if: needs.changes.outputs.cpp == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: cd templates/cpp && c++ -std=c++20 -O2 runner.cpp -o runner && ./runner 65536 0.1 0.2 | grep '"mbps"'
 
   go:
     name: Go template
@@ -265,7 +278,7 @@ jobs:
   # — a skipped dependency (its paths didn't change) is a pass.
   ci-passed:
     name: CI passed
-    needs: [changes, python, rust, c, go, java, swift, zig, ts, haskell, core, web]
+    needs: [changes, python, rust, c, cpp, go, java, swift, zig, ts, haskell, core, web]
     if: always()
     runs-on: ubuntu-latest
     steps:

@@ -17,6 +17,7 @@ Core and is then referenced from each language template's changelog as it syncs.
 | Python template | 0.1.0 | [templates/python/CHANGELOG.md](templates/python/CHANGELOG.md) | `templates/python/` |
 | Rust template | 0.1.0 | [templates/rust/CHANGELOG.md](templates/rust/CHANGELOG.md) | `templates/rust/` |
 | C template | 0.1.0 | [templates/c/CHANGELOG.md](templates/c/CHANGELOG.md) | `templates/c/` |
+| C++ template | 0.1.0 | [templates/cpp/CHANGELOG.md](templates/cpp/CHANGELOG.md) | `templates/cpp/` |
 | Go template | 0.1.0 | [templates/go/CHANGELOG.md](templates/go/CHANGELOG.md) | `templates/go/` |
 | Java template | 0.1.0 | [templates/java/CHANGELOG.md](templates/java/CHANGELOG.md) | `templates/java/` |
 | Swift template | 0.1.0 | [templates/swift/CHANGELOG.md](templates/swift/CHANGELOG.md) | `templates/swift/` |
