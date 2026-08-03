@@ -1,8 +1,8 @@
 """Gota: a generic cross-language micro-benchmark orchestrator.
 
 This file is project-agnostic. It runs a list of `RunnerSpec`s (each builds itself
-and emits JSON lines of {"impl","bench","mbps","iters"}), collects the rows, and
-writes a results.json plus a Markdown table. The project-specific configuration
+and emits JSON lines of {"impl","bench","mbps","mbps_median","iters","protocol"}),
+collects the rows, and writes a results.json plus a Markdown table. The project-specific configuration
 (which runners, the row/column labels, the framing text) lives in a `run.py` that
 imports this and supplies those, so the engine here never changes.
 
