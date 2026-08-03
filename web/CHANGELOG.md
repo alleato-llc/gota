@@ -52,6 +52,13 @@ every component is in [VERSIONS.md](../VERSIONS.md).
 
 ### Fixed
 
+- The page was **two languages behind the repo**: it advertised "Eight languages" with
+  eight cards and eight table rows, missing both Swift (added to the repo in July but
+  never to the page) and C++. Added a card and a build-row for each, in the README's
+  order, and corrected every count in the copy — the hero, the meta description, the
+  section heading, the badge line, the protocol/report/pitfall paragraphs — from eight to
+  ten. The languages array and the build table are hand-maintained here and are not
+  derived from `templates/`, so adding a language means editing this file too.
 - The site deploy now also triggers on `examples/report.html`. The showcased report is
   copied into the page at build time but lives outside `web/`, so a regenerated example
   did not redeploy — the published report could silently lag the repo (it did: `main`

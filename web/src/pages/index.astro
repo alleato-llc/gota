@@ -6,7 +6,7 @@ import Layout from "../layouts/Layout.astro";
 const REPO = "https://github.com/alleato-llc/gota";
 const BLOB = `${REPO}/blob/main`;
 
-// The eight language templates. `files` are what you copy; `your` is the seam
+// The ten language templates. `files` are what you copy; `your` is the seam
 // you edit; everything else stays untouched. Kept in sync with README.md.
 const languages = [
   {
@@ -25,6 +25,11 @@ const languages = [
     body: "The harness is a header plus one translation unit; the op is a function pointer with a void* ctx.",
   },
   {
+    name: "C++",
+    files: "gota.hpp · runner.cpp",
+    body: "Header-only: lambdas mean the op inlines into the timing loop, so no function-pointer indirection is needed. C++20, std::span buffer.",
+  },
+  {
     name: "Go",
     files: "go.mod · gota/gota.go · runner.go",
     body: "A tiny module with the harness in its own package. go build, then run.",
@@ -33,6 +38,11 @@ const languages = [
     name: "Java",
     files: "Gota.java · Runner.java",
     body: "The op is a functional interface; javac the two files and run Runner.",
+  },
+  {
+    name: "Swift",
+    files: "Gota.swift · runner.swift",
+    body: "The op is a non-escaping closure over an inout [UInt8]. An @main struct, because swiftc reserves top-level code for main.swift.",
   },
   {
     name: "Zig",
@@ -59,8 +69,10 @@ const cmpRows = [
   { name: "Python", ref: true, cells: ["gota.py", "runner.py", "python3 runner.py 65536 0.2 0.4"] },
   { name: "Rust", cells: ["gota.rs", "runner.rs", "rustc -O runner.rs -o runner"] },
   { name: "C", cells: ["gota.h + gota.c", "runner.c", "cc -std=c17 -O2 runner.c gota.c -o runner"] },
+  { name: "C++", cells: ["gota.hpp", "runner.cpp", "c++ -std=c++20 -O2 runner.cpp -o runner"] },
   { name: "Go", cells: ["gota/gota.go", "runner.go", "go build -o runner ."] },
   { name: "Java", cells: ["Gota.java", "Runner.java", "javac *.java && java Runner ..."] },
+  { name: "Swift", cells: ["Gota.swift", "runner.swift", "swiftc -O Gota.swift runner.swift -o runner"] },
   { name: "Zig", cells: ["gota.zig", "runner.zig", "zig build-exe runner.zig -O ReleaseFast"] },
   { name: "TypeScript", cells: ["gota.ts", "runner.ts", "node --experimental-strip-types runner.ts ..."] },
   { name: "Haskell", cells: ["Gota.hs", "runner.hs", "ghc -O2 runner.hs -o runner"] },
@@ -101,7 +113,7 @@ const approachRows = [
 
 <Layout
   title="gota — cross-language throughput micro-benchmarks"
-  description="A small, copy-it reference for honest cross-language throughput micro-benchmarks: a protocol, a generic Python orchestrator, per-language runner templates in eight languages, and a self-contained HTML report."
+  description="A small, copy-it reference for honest cross-language throughput micro-benchmarks: a protocol, a generic Python orchestrator, per-language runner templates in ten languages, and a self-contained HTML report."
 >
   <section class="hero">
     <div class="wrap">
@@ -109,7 +121,7 @@ const approachRows = [
       <h1>gota<span class="kanji">・滴</span></h1>
       <p class="tagline">Cross-language throughput benchmarks, drop by drop.</p>
       <p class="lead">
-        The same operation, implemented in eight languages, measured the same
+        The same operation, implemented in ten languages, measured the same
         way so the numbers actually compare. gota is a measurement protocol, a
         generic Python orchestrator, a runner template per language, and a
         self-contained HTML report. Copy it into your project; the protocol is
@@ -120,7 +132,7 @@ const approachRows = [
         <a class="btn ghost" href={`${BLOB}/PROTOCOL.md`}>Read the protocol</a>
       </div>
       <p class="fine">
-        Eight languages · one JSON line per benchmark · no fabricated numbers
+        Ten languages · one JSON line per benchmark · no fabricated numbers
       </p>
     </div>
   </section>
@@ -134,7 +146,7 @@ const approachRows = [
         code path goes. It deliberately leaves out everything around it: no
         network, no disk, no real workload. That isolation is the whole point. It
         is what makes one operation's speed a clean, comparable number — here, the
-        same operation across eight languages.
+        same operation across ten languages.
       </p>
       <div class="cmp-scroll">
         <table class="cmp">
@@ -169,7 +181,7 @@ const approachRows = [
         Benchmark, but it is a different kind of thing. Each of those is one
         language and a dependency you install — criterion in Rust, JMH in Java,
         Google Benchmark in C++. gota is the opposite: one ~20-line protocol you
-        copy, not a package you depend on, spanning all eight languages so their
+        copy, not a package you depend on, spanning all ten languages so their
         results land in the same table. The numbers compare <em>across</em>
         languages, which a single-language harness cannot do.
       </p>
@@ -234,7 +246,7 @@ const approachRows = [
 
   <section id="languages">
     <div class="wrap">
-      <h2>Eight languages, one protocol</h2>
+      <h2>Ten languages, one protocol</h2>
       <p class="sub">
         Two files per language: <code>gota.*</code> is the harness you copy
         untouched; <code>runner.*</code> is your code, where one seam
@@ -288,7 +300,7 @@ const approachRows = [
     <div class="wrap">
       <h2>See a live report</h2>
       <p class="sub">
-        The bundled example — FNV-1a across all eight languages — rendered by
+        The bundled example — FNV-1a across all ten languages — rendered by
         <code>report.py</code> into a standalone, sortable HTML viewer. One toggle in
         the report flips the same measurement between byte throughput (MB/s) and
         operations per second (one op = hashing the whole 64 KiB buffer): same numbers,
@@ -332,7 +344,7 @@ const approachRows = [
           entire wire format between a runner and the orchestrator.
         </li>
         <li>
-          <b>Kept equivalent across all eight templates.</b> Change the loop in
+          <b>Kept equivalent across all ten templates.</b> Change the loop in
           one and you change it in all of them, and in
           <code>PROTOCOL.md</code>, or they stop being comparable.
         </li>
@@ -422,7 +434,7 @@ const approachRows = [
         Copy <code>harness.py</code> and the <code>templates/&lt;lang&gt;</code>
         for each language you benchmark, swap your operation into each
         <code>runner.*</code>, write a small <code>run.py</code>, and run it. The
-        bundled example ties four languages together end to end.
+        bundled example ties all ten languages together end to end.
       </p>
       <pre class="snippet mono"><code><span class="cm"># run one language's runner standalone (prints one JSON line)</span>
 python3 templates/python/runner.py 65536 0.2 0.4
