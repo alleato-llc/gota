@@ -63,7 +63,7 @@ func (b *Bencher) Bench(name string, op func()) {
 			median = (samples[n/2-1] + samples[n/2]) / 2
 		}
 	}
-	fmt.Printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%d}\n", b.Impl, name, best, median, total)
+	fmt.Printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%d,\"protocol\":\"1.2.0\"}\n", b.Impl, name, best, median, total)
 }
 
 // Run parses argv (buffer_bytes, warmup_s, measure_s), allocates a buffer, and calls

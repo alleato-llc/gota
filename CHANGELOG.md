@@ -20,6 +20,21 @@ under Added / Changed / Fixed / Removed **in the same commit or PR**.
 
 ### Added
 
+- **Protocol 1.2.0: runners name the version they implement.** Each JSON line gains a
+  `protocol` field (`{"impl","bench","mbps","mbps_median","iters","protocol"}`), applied
+  across all ten `templates/<lang>/gota.*` and the ten example runners. `harness.py` gains
+  `PROTOCOL_VERSION`, records `{"harness":..., "runners":[...]}` in the results
+  provenance, and logs once per runner when one is behind. The field is **optional on
+  parse**: a runner copied before 1.2.0 omits it, still works, and reports as
+  "unspecified (pre-1.2.0)" — which is exactly the signal, since the sibling dorado
+  `bench/` is in that state today.
+  - The version is hardcoded in twenty harness copies, which is the kind of
+    hand-maintained constant that goes stale. `tests/test_languages.py` therefore pins it
+    against `VERSIONS.md`, `PROTOCOL.md`, and `harness.py`, so it cannot drift *inside*
+    this repo; a consumer's copy reporting an old version is the feature.
+- **`examples/harness.py` is pinned to the root `harness.py`.** The example is a
+  self-contained consumer carrying its own copy, and that copy silently went stale the
+  moment the root learned about protocol versions. A test now fails if the two differ.
 - **The protocol is now a versioned spec.** `PROTOCOL.md` is rewritten as the normative
   contract (numbered requirements, the exact JSON line, a conformance checklist for a new
   language template, and the honesty rules) and carries **Protocol 1.1.0**, a semantic

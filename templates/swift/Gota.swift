@@ -53,7 +53,7 @@ public final class Gota {
         let median = n == 0 ? 0.0
             : (n % 2 == 1 ? samples[n / 2] : (samples[n / 2 - 1] + samples[n / 2]) / 2)
         let f = { (x: Double) in String(format: "%.2f", x) }
-        print("{\"impl\":\"\(impl)\",\"bench\":\"\(name)\",\"mbps\":\(f(best)),\"mbps_median\":\(f(median)),\"iters\":\(total)}")
+        print("{\"impl\":\"\(impl)\",\"bench\":\"\(name)\",\"mbps\":\(f(best)),\"mbps_median\":\(f(median)),\"iters\":\(total),\"protocol\":\"1.2.0\"}")
     }
 
     public static func run(_ impl: String, _ register: (Gota, inout [UInt8]) -> Void) {

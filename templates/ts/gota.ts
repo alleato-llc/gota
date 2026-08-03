@@ -47,7 +47,7 @@ export class Bencher {
     const n = samples.length;
     const median = n === 0 ? 0 : n % 2 === 1 ? samples[(n - 1) / 2] : (samples[n / 2 - 1] + samples[n / 2]) / 2;
     process.stdout.write(
-      `{"impl":"${this.impl}","bench":"${name}","mbps":${best.toFixed(2)},"mbps_median":${median.toFixed(2)},"iters":${total}}\n`,
+      `{"impl":"${this.impl}","bench":"${name}","mbps":${best.toFixed(2)},"mbps_median":${median.toFixed(2)},"iters":${total},"protocol":"1.2.0"}\n`,
     );
   }
 }

@@ -15,7 +15,7 @@ working *on* Gota.
 
 - `PROTOCOL.md` — the **normative** contract every runner obeys: invocation, the JSON
   line, the four measurement steps, a conformance checklist, and the honesty rules. It
-  carries its own semantic version (currently **1.1.0**, tracked in `VERSIONS.md`), so a
+  carries its own semantic version (currently **1.2.0**, tracked in `VERSIONS.md`), so a
   consumer can state which protocol its copied runners implement and a stale copy is a
   checkable fact. This is the real product; the code is almost incidental.
 - `docs/DESIGN.md` — the reasoning behind every requirement in `PROTOCOL.md`: why batches,
@@ -67,7 +67,7 @@ working *on* Gota.
 
 Every `templates/<lang>/gota.*` implements the **same** protocol: same three CLI args,
 same peak-of-batches loop (warm up, grow a batch to >= 100ms, then report the fastest
-batch's MB/s), same JSON line `{"impl","bench","mbps","mbps_median","iters"}`. If you change the
+batch's MB/s), same JSON line `{"impl","bench","mbps","mbps_median","iters","protocol"}`. If you change the
 protocol or the timing loop, change it in **all ten** language templates and in
 `PROTOCOL.md`, or they stop being comparable. A protocol change also **bumps the Protocol
 version** in `VERSIONS.md` (MAJOR if runners stop being comparable or parseable, MINOR for
@@ -127,7 +127,7 @@ node --experimental-strip-types templates/ts/runner.ts 65536 0.2 0.4   # or: npx
 ( cd templates/haskell && ghc -O2 runner.hs -o runner && ./runner 65536 0.2 0.4 && rm -f runner *.hi *.o )
 ```
 
-Each must print one JSON line (now `{"impl","bench","mbps","mbps_median","iters"}`). For
+Each must print one JSON line (now `{"impl","bench","mbps","mbps_median","iters","protocol"}`). For
 the orchestrator and report, run the unit tests, then the example end-to-end and
 regenerate its artifacts:
 

@@ -73,7 +73,7 @@ void gota_bench(const gota_bencher *b, const char *name, void (*op)(void *), voi
         median = nsamp % 2 ? samples[nsamp / 2] : (samples[nsamp / 2 - 1] + samples[nsamp / 2]) / 2;
     }
     free(samples);
-    printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%llu}\n", b->impl, name, best, median, total);
+    printf("{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%llu,\"protocol\":\"1.2.0\"}\n", b->impl, name, best, median, total);
 }
 
 int gota_run(const char *impl, int argc, char **argv,

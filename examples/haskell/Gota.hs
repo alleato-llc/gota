@@ -88,7 +88,7 @@ bench b name op = do
         | odd n     = sorted !! (n `div` 2)
         | otherwise = (sorted !! (n `div` 2 - 1) + sorted !! (n `div` 2)) / 2
   printf
-    "{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%d}\n"
+    "{\"impl\":\"%s\",\"bench\":\"%s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%d,\"protocol\":\"1.2.0\"}\n"
     (bImpl b) name (best :: Double) (median :: Double) (total :: Int)
 
 -- | Parse argv (buffer_bytes, warmup_s, measure_s), allocate a zeroed buffer, and call

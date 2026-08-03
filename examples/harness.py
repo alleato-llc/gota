@@ -98,14 +98,34 @@ def run_all(
         if proc.returncode != 0:
             log(f"  {spec.name}: runner exited {proc.returncode}; stderr:\n{proc.stderr.strip()}")
             continue
+        seen_protocol: Optional[str] = None
         for line in proc.stdout.splitlines():
             line = line.strip()
             if line.startswith("{"):
                 try:
-                    rows.append(json.loads(line))
+                    row = json.loads(line)
                 except json.JSONDecodeError as e:
                     log(f"  {spec.name}: skipped malformed JSON line ({e}): {line[:120]}")
+                    continue
+                seen_protocol = row.get("protocol", seen_protocol)
+                rows.append(row)
+        # A runner older than this harness still works; say so once, per runner, rather
+        # than failing. Pre-1.2.0 runners report nothing at all.
+        if seen_protocol != PROTOCOL_VERSION:
+            claimed = seen_protocol or "unspecified (pre-1.2.0)"
+            log(f"  {spec.name}: protocol {claimed}, harness implements {PROTOCOL_VERSION}"
+                " -- re-copy gota.* to catch up")
     return rows
+
+
+PROTOCOL_VERSION = "1.2.0"
+"""The protocol version this harness implements (see PROTOCOL.md, VERSIONS.md).
+
+Runners report their own version in the `protocol` field of each JSON line. The field is
+OPTIONAL on purpose: a runner copied before 1.2.0 omits it and still parses, which is the
+whole point -- an old copy stays usable and merely reports as older. `run_all` records
+what each runner claimed and warns when it is behind, so "your copy is stale" is a fact
+you can see rather than a guess."""
 
 
 def _first_line(argv: list[str]) -> Optional[str]:
@@ -179,7 +199,13 @@ def build_results_doc(
     recorded so the report can headline the right number and a comparison can refuse to
     pit different kinds against each other. An unknown value raises. `units` stays the
     free-text display label (e.g. "MB/s", "requests/sec")."""
-    return {**meta, "params": params, "metric": Metric(metric).value, "units": units, "results": rows}
+    protocols = sorted({r["protocol"] for r in rows if r.get("protocol")})
+    doc = {**meta, "params": params, "metric": Metric(metric).value, "units": units}
+    # What the runners claimed, and what this harness implements. Absent from `rows`
+    # entirely if every runner predates 1.2.0, which is itself the signal.
+    doc["protocol"] = {"harness": PROTOCOL_VERSION, "runners": protocols}
+    doc["results"] = rows
+    return doc
 
 
 def render_markdown(

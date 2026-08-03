@@ -75,7 +75,7 @@ public:
 
         // %.*s so a string_view needs no null terminator (and no allocation).
         std::printf(
-            "{\"impl\":\"%.*s\",\"bench\":\"%.*s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%llu}\n",
+            "{\"impl\":\"%.*s\",\"bench\":\"%.*s\",\"mbps\":%.2f,\"mbps_median\":%.2f,\"iters\":%llu,\"protocol\":\"1.2.0\"}\n",
             static_cast<int>(impl_.size()), impl_.data(),
             static_cast<int>(name.size()), name.data(),
             best, median, static_cast<unsigned long long>(total));

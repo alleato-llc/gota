@@ -9,8 +9,9 @@ rule in [CLAUDE.md](CLAUDE.md) and the summary in [`README.md`](README.md#change
 The **Protocol** row is the contract in [`PROTOCOL.md`](PROTOCOL.md), versioned separately
 from the code that implements it. It is the number a consumer quotes: copied runners
 implement a protocol version, and when this row moves ahead of what a consumer copied,
-that consumer is behind in a way anyone can check. `1.1.0` is the current contract
-(`1.1.0` added `mbps_median` to the JSON line; `1.0.0` was the original four-field line).
+that consumer is behind in a way anyone can check. `1.2.0` is the current contract
+(`1.2.0` added the self-describing `protocol` field; `1.1.0` added `mbps_median`; `1.0.0`
+was the original four-field line).
 Its rationale lives in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 The **Core** row covers the cross-cutting pieces — the protocol, the orchestrator
@@ -20,7 +21,7 @@ Core and is then referenced from each language template's changelog as it syncs.
 
 | Component | Version | Changelog | Covers |
 | --- | --- | --- | --- |
-| Protocol | 1.1.0 | [CHANGELOG.md](CHANGELOG.md) | `PROTOCOL.md` (the runner contract) |
+| Protocol | 1.2.0 | [CHANGELOG.md](CHANGELOG.md) | `PROTOCOL.md` (the runner contract) |
 | Core | 0.1.0 | [CHANGELOG.md](CHANGELOG.md) | `PROTOCOL.md`, `harness.py`, `report.py`, `report_template.html`, `examples/`, `tests/`, shared docs |
 | Python template | 0.1.0 | [templates/python/CHANGELOG.md](templates/python/CHANGELOG.md) | `templates/python/` |
 | Rust template | 0.1.0 | [templates/rust/CHANGELOG.md](templates/rust/CHANGELOG.md) | `templates/rust/` |

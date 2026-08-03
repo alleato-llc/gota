@@ -8,6 +8,11 @@ version of every component is in [VERSIONS.md](../../VERSIONS.md).
 
 ## [Unreleased]
 
+### Changed
+
+- Synced to protocol **1.2.0** (see the [core changelog](../../CHANGELOG.md)): the
+  JSON line now carries a `protocol` field naming the version the runner implements.
+
 ### Fixed
 
 - `gota.c` now defines `_POSIX_C_SOURCE` before any include, so it builds on Linux.
