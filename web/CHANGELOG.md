@@ -52,6 +52,11 @@ every component is in [VERSIONS.md](../VERSIONS.md).
 
 ### Fixed
 
+- The site deploy now also triggers on `examples/report.html`. The showcased report is
+  copied into the page at build time but lives outside `web/`, so a regenerated example
+  did not redeploy — the published report could silently lag the repo (it did: `main`
+  carried the ten-language run while the site still served the nine-language one). The
+  build-time copy guarantees the two match *when a deploy runs*; this makes one run.
 - Every "view the source" link pointed at a repository that isn't this one: the page's
   single `REPO` constant read `github.com/nycjv321/gota` while the remote is
   `alleato-llc/gota`, so all of them 404'd. Corrected at the constant.
