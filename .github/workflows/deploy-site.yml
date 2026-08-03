@@ -31,6 +31,11 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      # The showcased report is NOT under web/: web/scripts/sync-report.mjs copies
+      # examples/report.html into the page at build time. Without this path a
+      # regenerated example would sit undeployed until some unrelated web/** change
+      # happened to ship it, so the live report would silently lag the repo.
+      - "examples/report.html"
       - "salpa.yaml"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:

@@ -131,8 +131,9 @@ template, add its job to that gate's `needs:` list too, or its failures won't bl
 ## Deploying the landing page
 
 `.github/workflows/deploy-site.yml` publishes `web/` to **gota.alleato.dev** on every push
-to `main` that touches `web/` (or `salpa.yaml`, or the workflow); nothing else triggers
-it, and it can be run by hand with `workflow_dispatch`. The deploy itself is `salpa deploy`
+to `main` that touches `web/`, `examples/report.html` (the showcased report, copied into
+the page at build time — regenerating it must redeploy), `salpa.yaml`, or the workflow;
+nothing else triggers it, and it can be run by hand with `workflow_dispatch`. The deploy itself is `salpa deploy`
 (the house release tool, pulled pinned from ghcr), configured by `salpa.yaml` at the repo
 root: it builds `web/` with npm, syncs `web/dist` to S3, and invalidates the CloudFront
 cache. Credentials are short-lived OIDC (`AWS_SITE_ROLE_ARN` as a **secret**, `AWS_REGION`
